@@ -1,0 +1,96 @@
+import React, { useState } from 'react';
+import {
+  TextField,
+  Grid,
+  Typography,
+  Paper,
+  Container,
+  Button
+} from '@mui/material';
+
+const sampleData = [
+  { id: 1, name: 'Apple' },
+  { id: 2, name: 'Banana' },
+  { id: 3, name: 'Cherry' },
+  { id: 4, name: 'Date' },
+  { id: 5, name: 'Elderberry' },
+];
+
+// A simple CommonGrid component to show results
+const CommonGrid = ({ data }) => {
+  return (
+    <Grid container spacing={2}>
+      {data.map((item) => (
+        <Grid item xs={12} sm={6} md={4} key={item.id}>
+          <Paper elevation={3} sx={{ padding: 2 }}>
+            <Typography variant="h6">{item.name}</Typography>
+          </Paper>
+        </Grid>
+      ))}
+    </Grid>
+  );
+};
+
+const App = () => {
+  const [query, setQuery] = useState('');
+  const [filterData, setFilterData] = useState(sampleData);
+
+  const handleSearch = (event) => {
+    const value = event.target.value;
+    setQuery(value);
+
+    if (value.trim() === '') {
+      // If query is empty, show all data
+      setFilterData(sampleData);
+    } else {
+      // Filter data based on query
+      const filtered = sampleData.filter((item) =>
+        item.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilterData(filtered);
+    }
+  };
+
+  // Clear the query and restore all data
+  const clearQueryAndFilters = () => {
+    setQuery('');
+    setFilterData(sampleData);
+  };
+
+  return (
+    <Container sx={{ padding: 2 }}>
+      <TextField
+        label="Search"
+        variant="outlined"
+        fullWidth
+        value={query}
+        onChange={handleSearch}
+        sx={{ marginBottom: 3 }}
+      />
+
+      {/* If filterData is non-empty, show the grid. Otherwise, show the “no results” message. */}
+      {filterData.length > 0 ? (
+        <CommonGrid data={filterData} />
+      ) : (
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <Typography variant="body1" gutterBottom>
+            Sorry, your search <strong>{query}</strong> did not match any results.
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            Perhaps try changing your query, using different or fewer words.
+          </Typography>
+          <Typography variant="body1" gutterBottom>or</Typography>
+          <Button
+            variant="text"
+            onClick={clearQueryAndFilters}
+            sx={{ textTransform: 'none', fontWeight: 'bold' }}
+          >
+            clear query and all filters
+          </Button>
+        </div>
+      )}
+    </Container>
+  );
+};
+
+export default App;
