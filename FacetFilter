@@ -1,0 +1,54 @@
+import React, { useEffect, useState } from 'react';
+import {
+  Box,
+  Checkbox,
+  FormControlLabel,
+  Typography,
+  FormGroup,
+  Paper,
+} from '@mui/material';
+
+const FacetFilter = ({ objectCount, selectedTypes, setSelectedTypes }) => {
+  const [types, setTypes] = useState([]);
+
+  useEffect(() => {
+    if (objectCount) {
+      const entries = Object.entries(objectCount); // [['Table', 12341], ['Job', 23123]]
+      setTypes(entries);
+    }
+  }, [objectCount]);
+
+  const handleChange = (type) => {
+    setSelectedTypes((prev) =>
+      prev.includes(type)
+        ? prev.filter((t) => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  return (
+    <Box sx={{ width: 250, p: 2 }}>
+      <Paper elevation={3} sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Type
+        </Typography>
+        <FormGroup>
+          {types.map(([type, count]) => (
+            <FormControlLabel
+              key={type}
+              control={
+                <Checkbox
+                  checked={selectedTypes.includes(type)}
+                  onChange={() => handleChange(type)}
+                />
+              }
+              label={`${type} (${count})`}
+            />
+          ))}
+        </FormGroup>
+      </Paper>
+    </Box>
+  );
+};
+
+export default FacetFilter;
