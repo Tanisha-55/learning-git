@@ -6,7 +6,12 @@ import {
   Typography,
   FormGroup,
   Paper,
+  IconButton,
+  Button,
+  Stack
 } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
+import CloseIcon from '@mui/icons-material/Close';
 
 const FacetFilter = ({ objectCount, selectedTypes, setSelectedTypes }) => {
   const [types, setTypes] = useState([]);
@@ -26,24 +31,50 @@ const FacetFilter = ({ objectCount, selectedTypes, setSelectedTypes }) => {
     );
   };
 
+  const clearAll = () => {
+    setSelectedTypes([]);
+  };
+
+  const removeType = (type) => {
+    setSelectedTypes((prev) => prev.filter((t) => t !== type));
+  };
+
   return (
     <Box sx={{ width: 250, p: 2 }}>
       <Paper elevation={3} sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Type
-        </Typography>
-        <FormGroup>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6">Type</Typography>
+          <Button
+            size="small"
+            color="secondary"
+            startIcon={<ClearIcon />}
+            onClick={clearAll}
+          >
+            Clear All
+          </Button>
+        </Stack>
+
+        <FormGroup sx={{ mt: 1 }}>
           {types.map(([type, count]) => (
-            <FormControlLabel
+            <Box
               key={type}
-              control={
-                <Checkbox
-                  checked={selectedTypes.includes(type)}
-                  onChange={() => handleChange(type)}
-                />
-              }
-              label={`${type} (${count})`}
-            />
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedTypes.includes(type)}
+                    onChange={() => handleChange(type)}
+                  />
+                }
+                label={`${type} (${count})`}
+              />
+              {selectedTypes.includes(type) && (
+                <IconButton size="small" onClick={() => removeType(type)}>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Box>
           ))}
         </FormGroup>
       </Paper>
