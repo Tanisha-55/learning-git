@@ -1,0 +1,161 @@
+import React, { useState } from "react";
+import { AgGridReact } from "ag-grid-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { Dialog } from "primereact/dialog";
+import ObservabilityPlatformDiag from "./ObservabilityPlatformDiag";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+import "primereact/resources/themes/lara-light-indigo/theme.css";
+import "primereact/resources/primereact.min.css";
+
+const rowData = [
+  { date: "20-Apr", job: "J1", completionTime: "6:04 AM", status: "Completed", jobKey: "job_001" },
+  { date: "21-Apr", job: "J1", completionTime: "6:04 AM", status: "Completed", jobKey: "job_002" },
+  { date: "22-Apr", job: "J1", completionTime: "6:14 AM", status: "Completed", jobKey: "job_003" },
+  { date: "23-Apr", job: "J1", completionTime: "6:00 AM", status: "Completed", jobKey: "job_004" },
+  { date: "24-Apr", job: "J1", completionTime: "-", status: "Failed", jobKey: "job_005" }
+];
+
+const ObservabilityPlatformUI = () => {
+  const [visible, setVisible] = useState(false);
+  const [selectedJobKey, setSelectedJobKey] = useState(null);
+
+  const columnDefs = [
+    { headerName: "Date", field: "date", sortable: true, filter: true },
+    {
+      headerName: "Job",
+      field: "job",
+      sortable: true,
+      filter: true,
+      cellRenderer: (params) => {
+        return (
+          <span
+            className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
+            onClick={() => {
+              setSelectedJobKey(params.data.jobKey);
+              setVisible(true);
+            }}
+          >
+            {params.value}
+          </span>
+        );
+      }
+    },
+    { headerName: "Completion Time", field: "completionTime", sortable: true, filter: true },
+    {
+      headerName: "Status",
+      field: "status",
+      sortable: true,
+      filter: true,
+      cellStyle: params => {
+        if (params.value === "Failed") {
+          return { color: "red", fontWeight: "bold" };
+        } else {
+          return { color: "green" };
+        }
+      }
+    }
+  ];
+
+  return (
+    <div className="p-6">
+      <Card className="max-w-4xl mx-auto shadow-lg">
+        <CardContent>
+          <h2 className="text-2xl font-bold mb-4 text-center">Observability platform UI</h2>
+          <div className="ag-theme-alpine" style={{ height: 300, width: "100%" }}>
+            <AgGridReact
+              rowData={rowData}
+              columnDefs={columnDefs}
+              pagination={true}
+              paginationPageSize={5}
+            />
+          </div>
+        </CardContent>
+      </Card>
+      <Dialog
+        header="Job Details"
+        visible={visible}
+        style={{ width: '50vw' }}
+        onHide={() => setVisible(false)}
+      >
+        <ObservabilityPlatformDiag jobKey={selectedJobKey} />
+      </Dialog>
+    </div>
+  );
+};
+
+export default ObservabilityPlatformUI;
+
+{
+  "jobs": [
+    {
+      "job": "J1",
+      "jobKey": "job-j1",
+      "tables": [
+        {
+          "table": "T1",
+          "system": "S1",
+          "reports": [
+            {
+              "report": "R1",
+              "users": ["U1"]
+            },
+            {
+              "report": "R2",
+              "users": ["U1"]
+            }
+          ]
+        },
+        {
+          "table": "T2",
+          "system": "S1",
+          "reports": [
+            {
+              "report": "R2",
+              "users": ["U2"]
+            },
+            {
+              "report": "R3",
+              "users": ["U3"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "job": "J2",
+      "jobKey": "job-j2",
+      "tables": [
+        {
+          "table": "T3",
+          "system": "S2",
+          "reports": [
+            {
+              "report": "R4",
+              "users": ["U4"]
+            },
+            {
+              "report": "R5",
+              "users": ["U5"]
+            }
+          ]
+        },
+        {
+          "table": "T4",
+          "system": "S2",
+          "reports": [
+            {
+              "report": "R6",
+              "users": ["U6"]
+            },
+            {
+              "report": "R7",
+              "users": ["U7"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
