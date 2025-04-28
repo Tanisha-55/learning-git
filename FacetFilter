@@ -182,3 +182,195 @@ const JobDashboard = () => {
 };
 
 export default JobDashboard;
+
+{
+  "jobCounts": {
+    "CEDAR": {
+      "success": {
+        "count": 205,
+        "jobs": [
+          "li-grc-etls", "li-grc-gxjsva", "li-grc-dw-ap-assoc-eti-a-dly",
+          "li-grc-dw-ap-assoc-eti-b-dly", "li-grc-dw-ap-assoc-eti-c-dly",
+          "li-grc-dw-ap-assoc-eti-d-dly", "li-grc-job-001", "li-grc-job-002"
+        ]
+      },
+      "failed": {
+        "count": 4,
+        "jobs": [
+          "li-grc-etls-a", "li-grc-gxjsva-b", 
+          "li-grc-dw-ap-assoc-eti-dly", "li-grc-job-failed-001"
+        ]
+      }
+    },
+    "LCD_MART": {
+      "success": {
+        "count": 105,
+        "jobs": [
+          "li-grc-etlbxs", "li-grc-gxjscdva", "li-grc-mart-job-001",
+          "li-grc-mart-job-002", "li-grc-mart-job-003"
+        ]
+      },
+      "failed": {
+        "count": 2,
+        "jobs": [
+          "li-grc-cvj-etls-a", "li-grc-g-m-xjsva-b"
+        ]
+      }
+    },
+    "CASPIAN": {
+      "success": {
+        "count": 256,
+        "jobs": [
+          "li-grc-casp-job-001", "li-grc-casp-job-002",
+          "li-grc-casp-job-003", "li-grc-casp-job-004"
+        ]
+      },
+      "failed": {
+        "count": 4,
+        "jobs": [
+          "li-grc-casp-failed-001", "li-grc-casp-failed-002",
+          "li-grc-casp-failed-003", "li-grc-casp-failed-004"
+        ]
+      }
+    }
+  },
+  "jobHistory": [
+    {
+      "date": "20-Apr",
+      "job": "li-grc-dw-ap-assoc-eti-dly",
+      "time": "6:04 AM",
+      "status": "Completed"
+    },
+    {
+      "date": "24-Apr",
+      "job": "li-grc-dw-ap-assoc-eti-dly",
+      "time": "6:00 AM",
+      "status": "Failed"
+    }
+  ]
+}
+
+
+import React, { useState } from 'react';
+import { Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Card, CardContent, List, ListItem, ListItemText } from '@mui/material';
+import dummyData from './dummy.json';
+
+const JobDashboard = () => {
+  const [selectedPlatform, setSelectedPlatform] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+
+  const handleCountClick = (platform, status) => {
+    setSelectedPlatform(platform);
+    setSelectedStatus(status);
+    setSelectedJob(null);
+  };
+
+  const handleJobClick = (jobName) => {
+    setSelectedJob(jobName);
+  };
+
+  const filteredJobs = selectedPlatform && selectedStatus 
+    ? dummyData.jobCounts[selectedPlatform][selectedStatus.toLowerCase()].jobs
+    : [];
+
+  const jobHistory = dummyData.jobHistory.filter(history => 
+    selectedJob ? history.job === selectedJob : false
+  );
+
+  return (
+    <Grid container spacing={2} sx={{ p: 2 }}>
+      {/* Left Side */}
+      <Grid item xs={6}>
+        <Typography variant="h6" gutterBottom>Job counts by Application</Typography>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Application</TableCell>
+                <TableCell>Successes</TableCell>
+                <TableCell>Failures</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.entries(dummyData.jobCounts).map(([platform, counts]) => (
+                <TableRow key={platform}>
+                  <TableCell>{platform}</TableCell>
+                  <TableCell>
+                    <span 
+                      style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => handleCountClick(platform, 'success')}
+                    >
+                      {counts.success.count}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span 
+                      style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => handleCountClick(platform, 'failed')}
+                    >
+                      {counts.failed.count}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
+
+      {/* Right Side */}
+      <Grid item xs={6}>
+        {selectedPlatform && selectedStatus && (
+          <Card sx={{ mb: 2, elevation: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {selectedPlatform} - {selectedStatus} Jobs
+              </Typography>
+              <List>
+                {filteredJobs.map(job => (
+                  <ListItem 
+                    key={job}
+                    button 
+                    onClick={() => selectedStatus === 'failed' && handleJobClick(job)}
+                    sx={{ 
+                      backgroundColor: selectedStatus === 'failed' ? '#ffeeee' : 'inherit',
+                      cursor: selectedStatus === 'failed' ? 'pointer' : 'default'
+                    }}
+                  >
+                    <ListItemText
+                      primary={job}
+                      secondary={`Status: ${selectedStatus}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedJob && (
+          <Card sx={{ elevation: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Job Run History - {selectedJob}
+              </Typography>
+              <List>
+                {jobHistory.map((history, index) => (
+                  <ListItem key={index}>
+                    <ListItemText
+                      primary={`${history.date} - ${history.time}`}
+                      secondary={`Status: ${history.status}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
+        )}
+      </Grid>
+    </Grid>
+  );
+};
+
+export default JobDashboard;
