@@ -1,3 +1,107 @@
+const [selectedHistory, setSelectedHistory] = useState(null);
+
+ {/* Job History Card */}
+  {selectedJob && (
+    <Card sx={{ boxShadow: 3, mt: 2 }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom sx={{ 
+          color: '#187ABA',
+          fontWeight: 'bold',
+          mb: 2,
+          padding: '8px',
+          borderBottom: '2px solid #187ABA'
+        }}>
+          Job Run History - {selectedJob}
+        </Typography>
+        
+        {/* Dialog for Job Details */}
+        <Dialog open={!!selectedHistory} onClose={() => setSelectedHistory(null)}>
+          <DialogTitle>Job Execution Details</DialogTitle>
+          <DialogContent>
+            {selectedHistory && (
+              <List>
+                <ListItem>
+                  <ListItemText primary="Job Name" secondary={selectedHistory.jobName} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="Date" secondary={selectedHistory.date} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="Duration" secondary={selectedHistory.duration} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="Initiated By" secondary={selectedHistory.initiatedBy} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText 
+                    primary="Error Message" 
+                    secondary={selectedHistory.errorMessage || 'N/A'} 
+                    sx={{ color: '#c62828' }}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="Details" secondary={selectedHistory.details} />
+                </ListItem>
+              </List>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setSelectedHistory(null)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ backgroundColor: '#187ABA', color: 'white' }}>Job Name</TableCell>
+                <TableCell sx={{ backgroundColor: '#187ABA', color: 'white' }}>Date</TableCell>
+                <TableCell sx={{ backgroundColor: '#187ABA', color: 'white' }}>Time</TableCell>
+                <TableCell sx={{ backgroundColor: '#187ABA', color: 'white' }}>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {jobHistory.map((history, index) => {
+                const isFailed = history.status === 'Failed';
+                return (
+                  <TableRow key={index} hover>
+                    <TableCell>
+                      <Typography 
+                        sx={{ 
+                          color: '#1976d2',
+                          textDecoration: 'underline',
+                          cursor: 'pointer',
+                          '&:hover': { textDecoration: 'none' }
+                        }}
+                        onClick={() => setSelectedHistory(history)}
+                      >
+                        {history.jobName}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{history.date}</TableCell>
+                    <TableCell>{history.time}</TableCell>
+                    <TableCell>
+                      <Typography 
+                        sx={{ 
+                          color: isFailed ? '#c62828' : '#2e7d32',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {history.status}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
+  )}
+
+
+
 {/* Right Side */}
 <Grid item xs={6}>
   {selectedPlatform && selectedStatus && (
