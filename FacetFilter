@@ -1,85 +1,184 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Checkbox,
-  FormControlLabel,
-  Typography,
-  FormGroup,
-  Paper,
-  IconButton,
-  Button,
-  Stack
-} from '@mui/material';
-import ClearIcon from '@mui/icons-material/Clear';
-import CloseIcon from '@mui/icons-material/Close';
-
-const FacetFilter = ({ objectCount, selectedTypes, setSelectedTypes }) => {
-  const [types, setTypes] = useState([]);
-
-  useEffect(() => {
-    if (objectCount) {
-      const entries = Object.entries(objectCount); // [['Table', 12341], ['Job', 23123]]
-      setTypes(entries);
+{
+  "jobCounts": {
+    "CEDAR": { "successes": 102, "failures": 2 },
+    "LCD_MART": { "successes": 305, "failures": 3 },
+    "CASPIAN": { "successes": 256, "failures": 4 }
+  },
+  "jobs": [
+    {
+      "name": "li-grc-dw-ap-assoc-eti-a-dly",
+      "status": "Completed"
+    },
+    {
+      "name": "li-grc-dw-ap-assoc-eti-b-dly",
+      "status": "Completed"
+    },
+    {
+      "name": "li-grc-dw-ap-assoc-eti-c-dly",
+      "status": "Completed"
+    },
+    {
+      "name": "li-grc-dw-ap-assoc-eti-d-dly",
+      "status": "Completed"
+    },
+    {
+      "name": "li-grc-dw-ap-assoc-eti-dly",
+      "status": "Failed"
     }
-  }, [objectCount]);
+  ],
+  "jobHistory": [
+    {
+      "date": "20-Apr",
+      "job": "li-grc-dw-ap-assoc-eti-dly",
+      "time": "6:04 AM",
+      "status": "Completed"
+    },
+    {
+      "date": "21-Apr",
+      "job": "li-grc-dw-ap-assoc-eti-dly",
+      "time": "6:04 AM",
+      "status": "Completed"
+    },
+    {
+      "date": "22-Apr",
+      "job": "li-grc-dw-ap-assoc-eti-dly",
+      "time": "6:14 AM",
+      "status": "Completed"
+    },
+    {
+      "date": "23-Apr",
+      "job": "li-grc-dw-ap-assoc-eti-dly",
+      "time": "6:00 AM",
+      "status": "Completed"
+    },
+    {
+      "date": "24-Apr",
+      "job": "li-grc-dw-ap-assoc-eti-dly",
+      "time": "6:00 AM",
+      "status": "Failed"
+    }
+  ]
+}
 
-  const handleChange = (type) => {
-    setSelectedTypes((prev) =>
-      prev.includes(type)
-        ? prev.filter((t) => t !== type)
-        : [...prev, type]
-    );
+import React, { useState } from 'react';
+import { Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Card, CardContent, List, ListItem, ListItemText } from '@mui/material';
+import dummyData from './dummy.json';
+
+const JobDashboard = () => {
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+
+  const handleStatusClick = (status) => {
+    setSelectedStatus(status);
+    setSelectedJob(null);
   };
 
-  const clearAll = () => {
-    setSelectedTypes([]);
+  const handleJobClick = (jobName) => {
+    setSelectedJob(jobName);
   };
 
-  const removeType = (type) => {
-    setSelectedTypes((prev) => prev.filter((t) => t !== type));
-  };
+  // Updated filtering logic
+  const filteredJobs = dummyData.jobs.filter(job => 
+    selectedStatus ? job.status === selectedStatus : false
+  );
+
+  const jobHistory = dummyData.jobHistory.filter(history => 
+    selectedJob ? history.job === selectedJob : false
+  );
 
   return (
-    <Box sx={{ width: 250, p: 2 }}>
-      <Paper elevation={3} sx={{ p: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">Type</Typography>
-          <Button
-            size="small"
-            color="secondary"
-            startIcon={<ClearIcon />}
-            onClick={clearAll}
-          >
-            Clear All
-          </Button>
-        </Stack>
+    <Grid container spacing={2} sx={{ p: 2 }}>
+      {/* Left Side */}
+      <Grid item xs={6}>
+        <Typography variant="h6" gutterBottom>Job counts by Application</Typography>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Application</TableCell>
+                <TableCell>Successes</TableCell>
+                <TableCell>Failures</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.entries(dummyData.jobCounts).map(([app, counts]) => (
+                <TableRow key={app}>
+                  <TableCell>{app}</TableCell>
+                  <TableCell>
+                    <span 
+                      style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => handleStatusClick('Completed')}
+                    >
+                      {counts.successes}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span 
+                      style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => handleStatusClick('Failed')}
+                    >
+                      {counts.failures}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
 
-        <FormGroup sx={{ mt: 1 }}>
-          {types.map(([type, count]) => (
-            <Box
-              key={type}
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={selectedTypes.includes(type)}
-                    onChange={() => handleChange(type)}
-                  />
-                }
-                label={`${type} (${count})`}
-              />
-              {selectedTypes.includes(type) && (
-                <IconButton size="small" onClick={() => removeType(type)}>
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              )}
-            </Box>
-          ))}
-        </FormGroup>
-      </Paper>
-    </Box>
+      {/* Right Side */}
+      <Grid item xs={6}>
+        {selectedStatus && (
+          <Card sx={{ mb: 2, elevation: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {selectedStatus} Jobs
+              </Typography>
+              <List>
+                {filteredJobs.map(job => (
+                  <ListItem 
+                    key={job.name}
+                    button 
+                    onClick={() => job.status === 'Failed' && handleJobClick(job.name)}
+                    sx={{ 
+                      backgroundColor: job.status === 'Failed' ? '#ffeeee' : 'inherit',
+                      cursor: job.status === 'Failed' ? 'pointer' : 'default'
+                    }}
+                  >
+                    <ListItemText
+                      primary={job.name}
+                      secondary={`Status: ${job.status}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedJob && (
+          <Card sx={{ elevation: 3 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Job Run History - {selectedJob}
+              </Typography>
+              <List>
+                {jobHistory.map((history, index) => (
+                  <ListItem key={index}>
+                    <ListItemText
+                      primary={`${history.date} - ${history.time}`}
+                      secondary={`Status: ${history.status}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </CardContent>
+          </Card>
+        )}
+      </Grid>
+    </Grid>
   );
 };
 
-export default FacetFilter;
+export default JobDashboard;
