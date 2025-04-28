@@ -13,6 +13,128 @@
           {selectedPlatform} - {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)} Jobs
         </Typography>
 
+        <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ 
+                  backgroundColor: '#187ABA', 
+                  color: 'white', 
+                  fontWeight: 'bold' 
+                }}>
+                  Job Name
+                </TableCell>
+                <TableCell sx={{ 
+                  backgroundColor: '#187ABA', 
+                  color: 'white', 
+                  fontWeight: 'bold' 
+                }}>
+                  Status
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredJobs.map((job) => (
+                <TableRow 
+                  key={job}
+                  hover
+                  onClick={() => selectedStatus === 'failed' && handleJobClick(job)}
+                  sx={{ 
+                    cursor: selectedStatus === 'failed' ? 'pointer' : 'default',
+                    backgroundColor: selectedStatus === 'failed' ? '#ffebee' : '#e8f5e9'
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: 'medium' }}>
+                    {job}
+                  </TableCell>
+                  <TableCell>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: selectedStatus === 'failed' ? '#c62828' : '#2e7d32',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
+  )}
+
+  {/* Job History Card */}
+  {selectedJob && (
+    <Card sx={{ boxShadow: 3, mt: 2 }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom sx={{ 
+          color: '#187ABA',
+          fontWeight: 'bold',
+          mb: 2,
+          padding: '8px',
+          borderBottom: '2px solid #187ABA'
+        }}>
+          Job Run History - {selectedJob}
+        </Typography>
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ backgroundColor: '#187ABA', color: 'white' }}>Date</TableCell>
+                <TableCell sx={{ backgroundColor: '#187ABA', color: 'white' }}>Time</TableCell>
+                <TableCell sx={{ backgroundColor: '#187ABA', color: 'white' }}>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {jobHistory.map((history, index) => (
+                <TableRow key={index}>
+                  <TableCell>{history.date}</TableCell>
+                  <TableCell>{history.time}</TableCell>
+                  <TableCell>
+                    <Typography 
+                      sx={{ 
+                        color: history.status === 'Failed' ? '#c62828' : '#2e7d32',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      {history.status}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
+    </Card>
+  )}
+</Grid>
+
+
+
+
+
+
+
+{/* Right Side */}
+<Grid item xs={6}>
+  {selectedPlatform && selectedStatus && (
+    <Card sx={{ mb: 2, boxShadow: 3 }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom sx={{ 
+          color: '#187ABA',
+          fontWeight: 'bold',
+          mb: 2,
+          padding: '8px',
+          borderBottom: '2px solid #187ABA'
+        }}>
+          {selectedPlatform} - {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)} Jobs
+        </Typography>
+
         <Grid container spacing={2}>
           {filteredJobs.map((job) => (
             <Grid item xs={12} sm={6} md={4} key={job}>
