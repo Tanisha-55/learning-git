@@ -1,3 +1,109 @@
+import React, { useState } from 'react';
+import { 
+  Grid, Paper, Table, TableBody, TableCell, TableContainer, 
+  TableHead, TableRow, Typography, Card, CardContent, List, 
+  ListItem, ListItemText, Box 
+} from '@mui/material';
+import dummyData from './dummy.json';
+
+const JobDashboard = () => {
+  const [selectedPlatform, setSelectedPlatform] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+
+  const handleCountClick = (platform, status) => {
+    setSelectedPlatform(platform);
+    setSelectedStatus(status);
+    setSelectedJob(null);
+  };
+
+  const handleJobClick = (jobName) => {
+    setSelectedJob(jobName);
+  };
+
+  const filteredJobs = selectedPlatform && selectedStatus 
+    ? dummyData.jobCounts[selectedPlatform][selectedStatus.toLowerCase()].jobs
+    : [];
+
+  const jobHistory = dummyData.jobHistory.filter(history => 
+    selectedJob ? history.job === selectedJob : false
+  );
+
+
+
+<Card elevation={3} sx={{ borderRadius: 2 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom sx={{ 
+              color: '#187ABA', 
+              fontWeight: 'bold',
+              mb: 2,
+              padding: '8px',
+              borderBottom: '2px solid #187ABA'
+            }}>
+              Job counts by Application
+            </Typography>
+            
+            <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#187ABA' }}>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Application</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Successes</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Failures</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Object.entries(dummyData.jobCounts).map(([platform, counts]) => (
+                    <TableRow key={platform} hover>
+                      <TableCell sx={{ fontWeight: 'medium' }}>{platform}</TableCell>
+                      
+                      {/* Success Cell */}
+                      <TableCell sx={{ 
+                        backgroundColor: '#e8f5e9',  // Light green background
+                        '&:hover': { backgroundColor: '#c8e6c9' }
+                      }}>
+                        <Box
+                          onClick={() => handleCountClick(platform, 'success')}
+                          sx={{
+                            cursor: 'pointer',
+                            color: '#2e7d32',  // Dark green text
+                            fontWeight: 'bold',
+                            '&:hover': { textDecoration: 'underline' }
+                          }}
+                        >
+                          {counts.success.count}
+                        </Box>
+                      </TableCell>
+                      
+                      {/* Failure Cell */}
+                      <TableCell sx={{ 
+                        backgroundColor: '#ffebee',  // Light red background
+                        '&:hover': { backgroundColor: '#ffcdd2' }
+                      }}>
+                        <Box
+                          onClick={() => handleCountClick(platform, 'failed')}
+                          sx={{
+                            cursor: 'pointer',
+                            color: '#c62828',  // Dark red text
+                            fontWeight: 'bold',
+                            '&:hover': { textDecoration: 'underline' }
+                          }}
+                        >
+                          {counts.failed.count}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </Grid>
+
+
+
+
 {
   "jobCounts": {
     "CEDAR": { "successes": 102, "failures": 2 },
