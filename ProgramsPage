@@ -1,318 +1,358 @@
 import {
-    Box,
-    Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    Pagination,
-    Stack,
-    TextField,
-    InputAdornment,
-    Button,
-    Chip,
-    Drawer,
-    Autocomplete,
-    IconButton,
-    Divider
-  } from '@mui/material';
-  import SearchIcon from '@mui/icons-material/Search';
-  import FilterListIcon from '@mui/icons-material/FilterList';
-  import CloseIcon from '@mui/icons-material/Close';
-  import React from 'react';
-  
-  interface ProgramData {
-    programName: string;
-    institutes: number;
-    students: number;
-    devices: number;
-    managers: string[];
-  }
-  
-  const ProgramsPage = () => {
-    const [isFilterOpen, setIsFilterOpen] = React.useState(false);
-    const [filters, setFilters] = React.useState({
-      partner: [],
-      programType: [],
-      model: [],
-      state: [],
-      district: [],
-      block: [],
-      village: [],
-      cluster: []
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Pagination,
+  Stack,
+  TextField,
+  InputAdornment,
+  Button,
+  Chip,
+  Tabs,
+  Tab,
+  Drawer,
+  Autocomplete,
+  IconButton,
+  Divider
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import CloseIcon from '@mui/icons-material/Close';
+import React from 'react';
+import { useState, useMemo } from 'react';
+
+interface ProgramData {
+  programName: string;
+  institutes: number;
+  students: number;
+  devices: number;
+  managers: string[];
+}
+
+const ProgramsPage = () => {
+  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
+  const [filters, setFilters] = React.useState({
+    partner: [],
+    programType: [],
+    model: [],
+    state: [],
+    district: [],
+    block: [],
+    village: [],
+    cluster: []
+  });
+  const [activeTab, setActiveTab] = useState(0);
+
+  // Sample filter options
+  const filterOptions = {
+    partners: ['Partner 1', 'Partner 2', 'Partner 3'],
+    programTypes: ['Type A', 'Type B', 'Type C'],
+    models: ['Model X', 'Model Y', 'Model Z'],
+    states: ['Karnataka', 'Maharashtra', 'Tamil Nadu'],
+    districts: ['District 1', 'District 2', 'District 3'],
+    blocks: ['Block A', 'Block B', 'Block C'],
+    villages: ['Village 1', 'Village 2', 'Village 3'],
+    clusters: ['Cluster 1', 'Cluster 2', 'Cluster 3']
+  };
+
+  const [searchTerm, setSearchTerm] = useState('');
+  // Sample data
+  const programsData: ProgramData[] = Array(10).fill({
+    programName: 'XYZ Program Karnataka',
+    institutes: 12,
+    students: 1482,
+    devices: 370,
+    managers: ['Sakshi'],
+  }).map((item, index) => {
+    if (index === 5 || index === 8 || index === 9) {
+      return { ...item, managers: ['Naveen', 'Kritika'] };
+    }
+    if (index === 6) {
+      return { ...item, managers: ['Naveen'] };
+    }
+    return item;
+  });
+
+  const handleFilterChange = (name, value) => {
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
+
+  // Custom styles for Autocomplete
+  const autocompleteStyles = {
+    '& .MuiOutlinedInput-root': {
+      padding: '6px!important',
+    },
+    '& .MuiAutocomplete-paper': {
+      boxShadow: 'none',
+      border: 'none',
+    },
+    '& .MuiAutocomplete-listbox': {
+      padding: 0,
+    }
+  };
+
+  // Custom Chip styles
+  const chipStyles = {
+    backgroundColor: '#e8f4ff',
+    color: '#1a73e8',
+    '& .MuiChip-deleteIcon': {
+      color: '#1a73e8'
+    }
+  };
+
+  // Filtered data based on search term
+  const filteredData = useMemo(() => {
+    console.log("searchTerm: ", searchTerm);
+    if (!searchTerm) return programsData;
+    const lowerSearch = searchTerm.toLowerCase();
+    
+    return programsData.filter(program => {
+      console.log("program: ", program);
+      return (
+        program.programName.toLowerCase().includes(lowerSearch) ||
+        program.managers.some(manager => 
+          manager.toLowerCase().includes(lowerSearch)
+        ) ||
+        program.institutes.toString().includes(searchTerm) ||
+        program.students.toString().includes(searchTerm) ||
+        program.devices.toString().includes(searchTerm)
+      );
     });
-  
-    // Sample filter options
-    const filterOptions = {
-      partners: ['Partner 1', 'Partner 2', 'Partner 3'],
-      programTypes: ['Type A', 'Type B', 'Type C'],
-      models: ['Model X', 'Model Y', 'Model Z'],
-      states: ['Karnataka', 'Maharashtra', 'Tamil Nadu'],
-      districts: ['District 1', 'District 2', 'District 3'],
-      blocks: ['Block A', 'Block B', 'Block C'],
-      villages: ['Village 1', 'Village 2', 'Village 3'],
-      clusters: ['Cluster 1', 'Cluster 2', 'Cluster 3']
-    };
-  
-    // Sample data
-    const programsData: ProgramData[] = Array(10).fill({
-      programName: 'XYZ Program Karnataka',
-      institutes: 12,
-      students: 1482,
-      devices: 370,
-      managers: ['Sakshi'],
-    }).map((item, index) => {
-      if (index === 5 || index === 8 || index === 9) {
-        return { ...item, managers: ['Naveen', 'Kritika'] };
-      }
-      if (index === 6) {
-        return { ...item, managers: ['Naveen'] };
-      }
-      return item;
-    });
-  
-    const handleFilterChange = (name, value) => {
-      setFilters(prev => ({ ...prev, [name]: value }));
-    };
-  
-    return (
-      <Box sx={{ p: 3 }}>
-        {/* Header Section */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          mb: 3 
-        }}>
-          {/* Overview Section */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h5">Overview</Typography>
-            <Chip label="At School" variant="outlined" sx={{ borderRadius: 1 }} />
-            <Chip label="At Home" variant="outlined" sx={{ borderRadius: 1 }} />
-          </Box>
-  
-          {/* Search and Filter */}
-          <Stack direction="row" spacing={2}>
-            <TextField
-              variant="outlined"
-              placeholder="Search programs..."
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                sx: { borderRadius: 2, width: 300 }
-              }}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<FilterListIcon />}
-              sx={{ 
-                borderRadius: 2,
-                px: 3,
-                textTransform: 'none'
-              }}
-              onClick={() => setIsFilterOpen(true)}
-            >
-              Filter
-            </Button>
-          </Stack>
-        </Box>
-  
-        {/* Filter Sidebar */}
-        <Drawer
-          anchor="right"
-          open={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
+  }, [searchTerm, programsData]);
+
+  console.log("Filtered Data: ", programsData);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  return (
+    <Box sx={{ 
+      p: 3,
+      backgroundColor: '#f8f9fc',
+      minHeight: '100vh'
+    }}>
+      {/* Header Section */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 3,
+        backgroundColor: 'white',
+        p: 2,
+        borderRadius: '8px',
+        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)'
+      }}>
+        {/* Tabs Section */}
+        <Tabs 
+          value={activeTab} 
+          onChange={handleTabChange}
           sx={{
-            '& .MuiDrawer-paper': {
-              width: 400,
-              p: 2
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#1976d2',
+              height: '3px'
             }
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Filters</Typography>
-            <IconButton onClick={() => setIsFilterOpen(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-          <Divider sx={{ mb: 3 }} />
-  
-          <Stack spacing={3}>
-            <Autocomplete
-              multiple
-              options={filterOptions.partners}
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select Partner"
-                  placeholder="Search partners..."
-                />
-              )}
-              onChange={(e, value) => handleFilterChange('partner', value)}
-            />
-  
-            <Autocomplete
-              multiple
-              options={filterOptions.programTypes}
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Program Type"
-                  placeholder="Search types..."
-                />
-              )}
-              onChange={(e, value) => handleFilterChange('programType', value)}
-            />
-  
-            <Autocomplete
-              multiple
-              options={filterOptions.models}
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Model"
-                  placeholder="Search models..."
-                />
-              )}
-              onChange={(e, value) => handleFilterChange('model', value)}
-            />
-  
-            <Autocomplete
-              multiple
-              options={filterOptions.states}
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select State"
-                  placeholder="Search states..."
-                />
-              )}
-              onChange={(e, value) => handleFilterChange('state', value)}
-            />
-  
-            <Autocomplete
-              multiple
-              options={filterOptions.districts}
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select District"
-                  placeholder="Search districts..."
-                />
-              )}
-              onChange={(e, value) => handleFilterChange('district', value)}
-            />
-  
-            <Autocomplete
-              multiple
-              options={filterOptions.blocks}
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select Block"
-                  placeholder="Search blocks..."
-                />
-              )}
-              onChange={(e, value) => handleFilterChange('block', value)}
-            />
-  
-            <Autocomplete
-              multiple
-              options={filterOptions.villages}
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select Village"
-                  placeholder="Search villages..."
-                />
-              )}
-              onChange={(e, value) => handleFilterChange('village', value)}
-            />
-  
-            <Autocomplete
-              multiple
-              options={filterOptions.clusters}
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select Cluster"
-                  placeholder="Search clusters..."
-                />
-              )}
-              onChange={(e, value) => handleFilterChange('cluster', value)}
-            />
-          </Stack>
-  
-          <Box sx={{ mt: 'auto', pt: 2, display: 'flex', gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => setIsFilterOpen(false)}
-              sx={{ textTransform: 'none' }}
-            >
-              Cancel
-            </Button>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={() => setIsFilterOpen(false)}
-              sx={{ textTransform: 'none' }}
-            >
-              Apply
-            </Button>
-          </Box>
-        </Drawer>
-  
-        {/* Programs Table */}
-        <Table sx={{ minWidth: 650, mb: 2 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="right">No of Institutes</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="right">No of Students</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="right">No of Devices</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Program Manager</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {programsData.map((program, index) => (
-              <TableRow key={index}>
-                <TableCell>{program.programName}</TableCell>
-                <TableCell align="right">{program.institutes}</TableCell>
-                <TableCell align="right">{program.students}</TableCell>
-                <TableCell align="right">{program.devices}</TableCell>
-                <TableCell>{program.managers.join(', ')}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-  
-        {/* Pagination */}
-        <Stack spacing={2} sx={{ mt: 3, alignItems: 'center' }}>
-          <Pagination
-            count={11}
-            shape="rounded"
-            showFirstButton
-            showLastButton
-            siblingCount={1}
-            boundaryCount={1}
-            page={1}
+          <Tab 
+            label="All Programs" 
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              color: activeTab === 0 ? '#1976d2' : 'inherit',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.04)'
+              }
+            }}
           />
+          <Tab 
+            label="At School" 
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              color: activeTab === 1 ? '#1976d2' : 'inherit',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.04)'
+              }
+            }}
+          />
+          <Tab 
+            label="At Home" 
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              color: activeTab === 2 ? '#1976d2' : 'inherit',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.04)'
+              }
+            }}
+          />
+        </Tabs>
+
+        {/* Search and Filter */}
+        <Stack direction="row" spacing={2}>
+          <TextField
+          variant="outlined"
+          placeholder="Search programs..."
+          onChange={handleSearchChange}
+          value={searchTerm}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+            sx: { 
+                borderRadius: '8px',
+                width: 300,
+                '& fieldset': {
+                  borderColor: '#e0e0e0'
+                }
+              }
+          }}
+        />
+          <Button
+            variant="outlined"
+            startIcon={<FilterListIcon />}
+            sx={{
+              borderRadius: '8px',
+              px: 3,
+              textTransform: 'none',
+              borderColor: '#e0e0e0',
+              color: '#6b778c',
+              '&:hover': {
+                borderColor: '#1976d2',
+                backgroundColor: 'rgba(25, 118, 210, 0.04)'
+              }}}
+            onClick={() => setIsFilterOpen(true)}
+          >
+            Filter
+          </Button>
         </Stack>
       </Box>
-    );
-  };
-  
-  export default ProgramsPage;
+
+      {/* Filter Sidebar */}
+      <Drawer
+        anchor="right"
+        open={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        sx={{
+          '& .MuiDrawer-paper': {
+            width: 400,
+            p: 2,
+            mb: 2,
+            boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)'
+          }
+        }}
+        style={{marginBottom: '100px'}}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">Filters</Typography>
+          <IconButton onClick={() => setIsFilterOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Divider sx={{ mb: 3 }} />
+
+        <Stack spacing={3} sx={{ mb: 2 }}>
+          {Object.entries(filterOptions).map(([key, options]) => (
+            <Autocomplete
+              key={key}
+              multiple
+              options={options}
+              filterSelectedOptions
+              sx={autocompleteStyles}
+              ChipProps={{ sx: chipStyles }}
+              componentsProps={{
+                paper: {
+                  sx: {
+                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                    border: 'none',
+                    '& .MuiAutocomplete-listbox': {
+                      padding: 0
+                    }
+                  }
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  placeholder={`Search ${key}...`}
+                  variant="outlined"
+                />
+              )}
+              onChange={(e, value) => handleFilterChange(key, value)}
+            />
+          ))}
+        </Stack>
+
+        <Box sx={{ mt: 'auto', pt: 2, display: 'flex', gap: 2, mb: 6 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => setIsFilterOpen(false)}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => setIsFilterOpen(false)}
+            sx={{ textTransform: 'none' }}
+          >
+            Apply
+          </Button>
+        </Box>
+      </Drawer>
+
+      {/* Programs Table */}
+      <Table sx={{ minWidth: 650, mb: 2 }}>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ fontWeight: 'bold' }}>Program Name</TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }} align="right">No of Institutes</TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }} align="right">No of Students</TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }} align="right">No of Devices</TableCell>
+            <TableCell sx={{ fontWeight: 'bold' }}>Program Manager</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {filteredData.map((program, index) => (
+            <TableRow key={index}>
+              <TableCell>{program.programName}</TableCell>
+              <TableCell align="right">{program.institutes}</TableCell>
+              <TableCell align="right">{program.students}</TableCell>
+              <TableCell align="right">{program.devices}</TableCell>
+              <TableCell>{program.managers.join(', ')}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Pagination */}
+      <Stack spacing={2} sx={{ mt: 3, alignItems: 'center' }}>
+        <Pagination
+          count={11}
+          shape="rounded"
+          showFirstButton
+          showLastButton
+          siblingCount={1}
+          boundaryCount={1}
+          page={1}
+        />
+      </Stack>
+    </Box>
+  );
+};
+
+export default ProgramsPage;
