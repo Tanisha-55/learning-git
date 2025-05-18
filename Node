@@ -5,5 +5,10 @@ public class Node {
     private List<Node> upstream = new ArrayList<>();
     private List<Node> downstream = new ArrayList<>();
 
-    // Constructors, getters, setters
+    // Constructor, getters, setters
+    public Node(String name, Long id, Integer lvl) {
+        this.name = name;
+        this.id = id;
+        this.lvl = lvl;
+    }
 }
