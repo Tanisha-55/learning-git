@@ -1,0 +1,12 @@
+@Entity
+@Table(name = "resource_relations")
+public class ResourceRelation {
+    @Id
+    private Long id;
+    private String srcResourceNm;
+    private Long srcRsrcKy;
+    private String tgtResourceNm;
+    private Long tgtRsrcKy;
+    private Integer lvl;
+    // Getters and setters
+}
