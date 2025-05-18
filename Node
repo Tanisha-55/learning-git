@@ -2,13 +2,40 @@ public class Node {
     private String name;
     private Long id;
     private Integer lvl;
-    private List<Node> upstream = new ArrayList<>();
-    private List<Node> downstream = new ArrayList<>();
+    private List<Node> upstream;  // Populated only for upstream nodes
+    private List<Node> downstream; // Populated only for downstream nodes
 
-    // Constructor, getters, setters
-    public Node(String name, Long id, Integer lvl) {
+    // Constructor for upstream nodes (sets downstream = null)
+    public Node(String name, Long id, Integer lvl, boolean isUpstream) {
         this.name = name;
         this.id = id;
         this.lvl = lvl;
+        if (isUpstream) {
+            this.upstream = new ArrayList<>();
+            this.downstream = null;
+        } else {
+            this.downstream = new ArrayList<>();
+            this.upstream = null;
+        }
+    }
+
+    // Getters with @JsonInclude to omit null fields
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public List<Node> getUpstream() {
+        return upstream;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public List<Node> getDownstream() {
+        return downstream;
+    }
+
+    // Setters
+    public void setUpstream(List<Node> upstream) {
+        this.upstream = upstream;
+    }
+
+    public void setDownstream(List<Node> downstream) {
+        this.downstream = downstream;
     }
 }
