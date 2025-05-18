@@ -1,4 +1,40 @@
-public interface ResourceRelationRepository extends JpaRepository<ResourceRelation, Long> {
-    List<ResourceRelation> findByTgtRsrcKy(Long tgtRsrcKy); // Upstream relations
-    List<ResourceRelation> findBySrcRsrcKy(Long srcRsrcKy); // Downstream relations
+@Repository
+public class ResourceRepository {
+    private final JdbcTemplate jdbcTemplate;
+
+    public ResourceRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    // Fetch upstream nodes (with upstream initialized, downstream = null)
+    public List<Node> findUpstreamByResourceId(Long resourceId) {
+        String sql =
+            "SELECT src_rsrc_nm AS name, src_rsrc_ky AS id, lvl " +
+            "FROM resource_relations " +
+            "WHERE tgt_rsrc_ky = ?";
+        return jdbcTemplate.query(sql, new Object[]{resourceId}, (rs, rowNum) ->
+            new Node(rs.getString("name"), rs.getLong("id"), rs.getInt("lvl"), true)
+        );
+    }
+
+    // Fetch downstream nodes (with downstream initialized, upstream = null)
+    public List<Node> findDownstreamByResourceId(Long resourceId) {
+        String sql =
+            "SELECT tgt_rsrc_nm AS name, tgt_rsrc_ky AS id, lvl " +
+            "FROM resource_relations " +
+            "WHERE src_rsrc_ky = ?";
+        return jdbcTemplate.query(sql, new Object[]{resourceId}, (rs, rowNum) ->
+            new Node(rs.getString("name"), rs.getLong("id"), rs.getInt("lvl"), false)
+        );
+    }
+
+    // Fetch root node name
+    public String findRootName(Long resourceId) {
+        String sql =
+            "SELECT COALESCE( " +
+            "  (SELECT tgt_rsrc_nm FROM resource_relations WHERE tgt_rsrc_ky = ? LIMIT 1), " +
+            "  (SELECT src_rsrc_nm FROM resource_relations WHERE src_rsrc_ky = ? LIMIT 1) " +
+            ")";
+        return jdbcTemplate.queryForObject(sql, new Object[]{resourceId, resourceId}, String.class);
+    }
 }
