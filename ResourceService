@@ -4,60 +4,55 @@ public class ResourceService {
     private ResourceRelationRepository relationRepository;
 
     public Node getResourceHierarchy(Long resourceId) {
-        // Fetch root details (assuming resourceId exists)
-        Node root = new Node();
-        root.setId(resourceId);
-        root.setLvl(0); // Root level is 0
+        // Fetch root details
+        Node root = buildRootNode(resourceId); // Assume this method exists
+        Set<Long> visited = new HashSet<>();
 
-        // Fetch immediate relations to get root name
-        List<ResourceRelation> upstream = relationRepository.findByTgtRsrcKy(resourceId);
-        List<ResourceRelation> downstream = relationRepository.findBySrcRsrcKy(resourceId);
-        if (!upstream.isEmpty()) {
-            root.setName(upstream.get(0).getTgtResourceNm());
-        } else if (!downstream.isEmpty()) {
-            root.setName(downstream.get(0).getSrcResourceNm());
-        } else {
-            throw new RuntimeException("Resource not found");
-        }
-
-        // Build upstream/downstream with cycle prevention
-        root.setUpstream(buildUpstream(resourceId, new HashSet<>()));
-        root.setDownstream(buildDownstream(resourceId, new HashSet<>()));
+        // Build upstream and downstream iteratively or recursively with shared visited
+        root.setUpstream(buildUpstreamIterative(resourceId, visited));
+        visited.clear(); // Reset for downstream
+        root.setDownstream(buildDownstreamIterative(resourceId, visited));
         return root;
     }
 
-    private List<Node> buildUpstream(Long resourceId, Set<Long> visited) {
-        if (visited.contains(resourceId)) return Collections.emptyList();
-        visited.add(resourceId);
-
-        List<ResourceRelation> relations = relationRepository.findByTgtRsrcKy(resourceId);
+    // Iterative approach for upstream (prevents deep recursion)
+    private List<Node> buildUpstreamIterative(Long resourceId, Set<Long> visited) {
         List<Node> nodes = new ArrayList<>();
+        Stack<Long> stack = new Stack<>();
+        stack.push(resourceId);
 
-        for (ResourceRelation rel : relations) {
-            Node node = new Node();
-            node.setName(rel.getSrcResourceNm());
-            node.setId(rel.getSrcRsrcKy());
-            node.setLvl(rel.getLvl());
-            node.setUpstream(buildUpstream(rel.getSrcRsrcKy(), new HashSet<>(visited)));
-            nodes.add(node);
+        while (!stack.isEmpty()) {
+            Long currentId = stack.pop();
+            if (visited.contains(currentId)) continue;
+            visited.add(currentId);
+
+            List<ResourceRelation> relations = relationRepository.findByTgtRsrcKy(currentId);
+            for (ResourceRelation rel : relations) {
+                Node node = new Node(rel.getSrcResourceNm(), rel.getSrcRsrcKy(), rel.getLvl());
+                nodes.add(node);
+                stack.push(rel.getSrcRsrcKy()); // Process next level
+            }
         }
         return nodes;
     }
 
-    private List<Node> buildDownstream(Long resourceId, Set<Long> visited) {
-        if (visited.contains(resourceId)) return Collections.emptyList();
-        visited.add(resourceId);
-
-        List<ResourceRelation> relations = relationRepository.findBySrcRsrcKy(resourceId);
+    // Similar method for downstream
+    private List<Node> buildDownstreamIterative(Long resourceId, Set<Long> visited) {
         List<Node> nodes = new ArrayList<>();
+        Queue<Long> queue = new LinkedList<>();
+        queue.add(resourceId);
 
-        for (ResourceRelation rel : relations) {
-            Node node = new Node();
-            node.setName(rel.getTgtResourceNm());
-            node.setId(rel.getTgtRsrcKy());
-            node.setLvl(rel.getLvl());
-            node.setDownstream(buildDownstream(rel.getTgtRsrcKy(), new HashSet<>(visited)));
-            nodes.add(node);
+        while (!queue.isEmpty()) {
+            Long currentId = queue.poll();
+            if (visited.contains(currentId)) continue;
+            visited.add(currentId);
+
+            List<ResourceRelation> relations = relationRepository.findBySrcRsrcKy(currentId);
+            for (ResourceRelation rel : relations) {
+                Node node = new Node(rel.getTgtResourceNm(), rel.getTgtRsrcKy(), rel.getLvl());
+                nodes.add(node);
+                queue.add(rel.getTgtRsrcKy()); // Process next level
+            }
         }
         return nodes;
     }
