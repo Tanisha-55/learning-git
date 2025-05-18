@@ -1,0 +1,12 @@
+@RestController
+@RequestMapping("/api/resources")
+public class ResourceController {
+    @Autowired
+    private ResourceService resourceService;
+
+    @GetMapping("/{resourceId}/hierarchy")
+    public ResponseEntity<Node> getHierarchy(@PathVariable Long resourceId) {
+        Node hierarchy = resourceService.getResourceHierarchy(resourceId);
+        return ResponseEntity.ok(hierarchy);
+    }
+}
