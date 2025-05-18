@@ -1,0 +1,4 @@
+public interface ResourceRelationRepository extends JpaRepository<ResourceRelation, Long> {
+    List<ResourceRelation> findByTgtRsrcKy(Long tgtRsrcKy); // Upstream relations
+    List<ResourceRelation> findBySrcRsrcKy(Long srcRsrcKy); // Downstream relations
+}
