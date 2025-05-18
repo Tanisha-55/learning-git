@@ -1,0 +1,9 @@
+public class Node {
+    private String name;
+    private Long id;
+    private Integer lvl;
+    private List<Node> upstream = new ArrayList<>();
+    private List<Node> downstream = new ArrayList<>();
+
+    // Constructors, getters, setters
+}
