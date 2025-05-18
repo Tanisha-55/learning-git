@@ -1,24 +1,24 @@
 @Service
 public class ResourceService {
-    @Autowired
-    private ResourceRelationRepository relationRepository;
+    private final ResourceRepository resourceRepo;
+
+    public ResourceService(ResourceRepository resourceRepo) {
+        this.resourceRepo = resourceRepo;
+    }
 
     public Node getResourceHierarchy(Long resourceId) {
-        // Fetch root details
-        Node root = buildRootNode(resourceId); // Assume this method exists
-        Set<Long> visited = new HashSet<>();
-
-        // Build upstream and downstream iteratively or recursively with shared visited
-        root.setUpstream(buildUpstreamIterative(resourceId, visited));
-        visited.clear(); // Reset for downstream
-        root.setDownstream(buildDownstreamIterative(resourceId, visited));
+        String rootName = resourceRepo.findRootName(resourceId);
+        Node root = new Node(rootName, resourceId, 0, true); // Root is upstream by default
+        root.setUpstream(buildUpstream(resourceId));
+        root.setDownstream(buildDownstream(resourceId));
         return root;
     }
 
-    // Iterative approach for upstream (prevents deep recursion)
-    private List<Node> buildUpstreamIterative(Long resourceId, Set<Long> visited) {
-        List<Node> nodes = new ArrayList<>();
+    // Build upstream hierarchy (direction = upstream)
+    private List<Node> buildUpstream(Long resourceId) {
+        List<Node> upstreamNodes = new ArrayList<>();
         Stack<Long> stack = new Stack<>();
+        Set<Long> visited = new HashSet<>();
         stack.push(resourceId);
 
         while (!stack.isEmpty()) {
@@ -26,20 +26,23 @@ public class ResourceService {
             if (visited.contains(currentId)) continue;
             visited.add(currentId);
 
-            List<ResourceRelation> relations = relationRepository.findByTgtRsrcKy(currentId);
-            for (ResourceRelation rel : relations) {
-                Node node = new Node(rel.getSrcResourceNm(), rel.getSrcRsrcKy(), rel.getLvl());
-                nodes.add(node);
-                stack.push(rel.getSrcRsrcKy()); // Process next level
+            List<Node> currentUpstreams = resourceRepo.findUpstreamByResourceId(currentId);
+            for (Node node : currentUpstreams) {
+                if (!visited.contains(node.getId())) {
+                    stack.push(node.getId());
+                    node.setUpstream(buildUpstream(node.getId())); // Recursively build upstream
+                    upstreamNodes.add(node);
+                }
             }
         }
-        return nodes;
+        return upstreamNodes;
     }
 
-    // Similar method for downstream
-    private List<Node> buildDownstreamIterative(Long resourceId, Set<Long> visited) {
-        List<Node> nodes = new ArrayList<>();
+    // Build downstream hierarchy (direction = downstream)
+    private List<Node> buildDownstream(Long resourceId) {
+        List<Node> downstreamNodes = new ArrayList<>();
         Queue<Long> queue = new LinkedList<>();
+        Set<Long> visited = new HashSet<>();
         queue.add(resourceId);
 
         while (!queue.isEmpty()) {
@@ -47,13 +50,15 @@ public class ResourceService {
             if (visited.contains(currentId)) continue;
             visited.add(currentId);
 
-            List<ResourceRelation> relations = relationRepository.findBySrcRsrcKy(currentId);
-            for (ResourceRelation rel : relations) {
-                Node node = new Node(rel.getTgtResourceNm(), rel.getTgtRsrcKy(), rel.getLvl());
-                nodes.add(node);
-                queue.add(rel.getTgtRsrcKy()); // Process next level
+            List<Node> currentDownstreams = resourceRepo.findDownstreamByResourceId(currentId);
+            for (Node node : currentDownstreams) {
+                if (!visited.contains(node.getId())) {
+                    queue.add(node.getId());
+                    node.setDownstream(buildDownstream(node.getId())); // Recursively build downstream
+                    downstreamNodes.add(node);
+                }
             }
         }
-        return nodes;
+        return downstreamNodes;
     }
 }
