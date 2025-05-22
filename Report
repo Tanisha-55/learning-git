@@ -1,0 +1,186 @@
+import React from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Divider,
+  Grid,
+  Stack,
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  useTheme
+} from '@mui/material';
+import {
+  Description,
+  Refresh,
+  Schedule,
+  Group,
+  Storage,
+  Visibility
+} from '@mui/icons-material';
+
+const ReportList = () => {
+  const theme = useTheme();
+
+  // Sample data from provided images
+  const report = {
+    name: "Monthly Change History Report for IT Assessment Coordinators",
+    id: "C06NOS-Monthly",
+    rebootId: "ID: RBT-2025-IT",
+    description: "Scheduled report showing issues data and change history of risk acceptances",
+    tool: "Cognos",
+    type: "Tabular",
+    frequency: "Monthly",
+    dataFrequency: "Hourly",
+    loadBy: "pracerdw",
+    userGroups: [
+      { level: 12, name: "OpenPages MS Default Profile" },
+      { level: 10, name: "OpenPages ORD" },
+      { level: 12, name: "OpenPages All Users" }
+    ],
+    lastRefresh: "2025-05-22",
+    dataSource: "TABLE",
+    visualType: "Table",
+    url: "https://egrcdw-cognos-prod.ms.com/ibmcaprod/bi/"
+  };
+
+  return (
+    <Card sx={{ mb: 2, boxShadow: 3, borderRadius: '8px' }}>
+      <CardContent>
+        {/* Header Section */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Avatar sx={{ bgcolor: theme.palette.primary.main, mr: 2 }}>
+            <Description />
+          </Avatar>
+          <Box>
+            <Typography variant="h6">{report.name}</Typography>
+            <Typography variant="subtitle2" color="text.secondary">
+              {report.id}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 2 }} />
+
+        {/* Main Content Grid */}
+        <Grid container spacing={3}>
+          {/* Left Column */}
+          <Grid item xs={12} md={6}>
+            <Stack spacing={2}>
+              <Chip 
+                label={`Reboot - ${report.rebootId}`} 
+                variant="outlined" 
+                color="primary"
+                sx={{ alignSelf: 'flex-start' }}
+              />
+              <Typography variant="body2">
+                {report.description}
+              </Typography>
+              
+              <List dense sx={{ py: 0 }}>
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemText
+                    primary="VISI - Type"
+                    secondary={
+                      <Chip 
+                        label={report.visualType} 
+                        size="small" 
+                        icon={<Visibility />}
+                      />
+                    }
+                  />
+                </ListItem>
+                <ListItem sx={{ px: 0 }}>
+                  <ListItemText
+                    primary="Rpt - Type"
+                    secondary={
+                      <Chip 
+                        label={report.type} 
+                        size="small" 
+                        color="secondary"
+                      />
+                    }
+                  />
+                </ListItem>
+              </List>
+            </Stack>
+          </Grid>
+
+          {/* Right Column */}
+          <Grid item xs={12} md={6}>
+            <Stack spacing={2}>
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <Chip
+                    label={`Rbt - RF - ${report.frequency}`}
+                    icon={<Schedule />}
+                    variant="outlined"
+                    fullWidth
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <Chip
+                    label={`Data - RF - ${report.dataFrequency}`}
+                    icon={<Refresh />}
+                    variant="outlined"
+                    color="secondary"
+                    fullWidth
+                  />
+                </Grid>
+              </Grid>
+
+              <Divider />
+
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Load Data:
+                </Typography>
+                <Chip
+                  label={`Load By: ${report.loadBy}`}
+                  icon={<Storage />}
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+
+              <Divider />
+
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  User Groups:
+                </Typography>
+                <Stack spacing={1} sx={{ mt: 1 }}>
+                  {report.userGroups.map((group, index) => (
+                    <Chip
+                      key={index}
+                      label={`Level-${group.level}: ${group.name}`}
+                      icon={<Group />}
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            </Stack>
+          </Grid>
+        </Grid>
+
+        {/* Footer */}
+        <Divider sx={{ my: 2 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Typography variant="caption">
+            Last Refresh: {report.lastRefresh}
+          </Typography>
+          <Typography variant="caption">
+            Data Source: {report.dataSource}
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ReportList;
