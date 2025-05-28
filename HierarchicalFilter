@@ -1,0 +1,83 @@
+import React, { useState, useMemo } from 'react';
+import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
+import { Box, Typography, Button } from '@mui/material';
+
+const HierarchicalFilter = ({ facetData }) => {
+  const [selectedItems, setSelectedItems] = useState([]);
+
+  // Convert the facetData object to the required tree structure
+  const treeData = useMemo(() => {
+    const convertToTree = (data, parentPath = '') => {
+      return Object.entries(data).map(([key, value]) => {
+        const nodeId = parentPath ? `${parentPath}|${key}` : key;
+        const label = `${key} (${value.count})`;
+        
+        let children = [];
+        if (value.assetNames) {
+          children = convertToTree(value.assetNames, nodeId);
+        } else if (value.dbNames) {
+          children = convertToTree(value.dbNames, nodeId);
+        } else if (value.rsrcNames) {
+          children = convertToTree(value.rsrcNames, nodeId);
+        }
+        
+        return {
+          id: nodeId,
+          label,
+          children: children.length > 0 ? children : undefined,
+        };
+      });
+    };
+
+    return convertToTree(facetData);
+  }, [facetData]);
+
+  const handleSelectionChange = (event, itemIds) => {
+    setSelectedItems(itemIds);
+  };
+
+  const handleClearAll = () => {
+    setSelectedItems([]);
+  };
+
+  return (
+    <Box sx={{ minWidth: 300, maxWidth: 500 }}>
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          mb: 2
+        }}
+      >
+        <Typography variant="h6">EATER TYPE</Typography>
+        <Button 
+          variant="text" 
+          onClick={handleClearAll}
+          sx={{ textTransform: 'none' }}
+        >
+          CLEAR ALL
+        </Button>
+      </Box>
+      
+      <RichTreeView
+        items={treeData}
+        selectedItems={selectedItems}
+        onSelectedItemsChange={handleSelectionChange}
+        multiSelect
+        defaultCollapseIcon={<span>▼</span>}
+        defaultExpandIcon={<span>▶</span>}
+        checkboxSelection
+        sx={{
+          '& .MuiTreeItem-label': {
+            fontSize: '0.875rem',
+          },
+          '& .MuiTreeItem-root': {
+            marginBottom: '4px',
+          },
+        }}
+      />
+    </Box>
+  );
+};
+export default HierarchicalFilter;
