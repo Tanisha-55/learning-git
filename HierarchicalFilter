@@ -1,17 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Card, CardContent } from '@mui/material';
 
-const HierarchicalFilter = ({ facetData = {} }) => {
+const HierarchicalFilter = ({ facetData = {}, title = "TYPE" }) => {
   const [selectedItems, setSelectedItems] = useState([]);
   
-  // Enable full selection propagation (both parents and descendants)
   const selectionPropagation = {
     parents: true,
     descendants: true
   };
 
-  // Convert the facetData object to the required tree structure
   const treeData = useMemo(() => {
     const convertToTree = (data, parentPath = '') => {
       if (!data || typeof data !== 'object') {
@@ -44,6 +42,21 @@ const HierarchicalFilter = ({ facetData = {} }) => {
     return convertToTree(facetData);
   }, [facetData]);
 
+  const getAllItemIds = (items) => {
+    let ids = [];
+    items.forEach(item => {
+      ids.push(item.id);
+      if (item.children) {
+        ids = [...ids, ...getAllItemIds(item.children)];
+      }
+    });
+    return ids;
+  };
+
+  const defaultExpandedItems = useMemo(() => {
+    return treeData.length > 0 ? getAllItemIds(treeData) : [];
+  }, [treeData]);
+
   const handleSelectionChange = (event, itemIds) => {
     setSelectedItems(itemIds);
   };
@@ -52,55 +65,91 @@ const HierarchicalFilter = ({ facetData = {} }) => {
     setSelectedItems([]);
   };
 
-  // Get default expanded items (first level items)
-  const defaultExpandedItems = useMemo(() => {
-    return treeData.length > 0 ? [treeData[0].id] : [];
-  }, [treeData]);
-
   return (
-    <Box sx={{ minWidth: 300, maxWidth: 500 }}>
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          mb: 2
-        }}
-      >
-        <Typography variant="h6">EATER TYPE</Typography>
-        <Button 
-          variant="text" 
-          onClick={handleClearAll}
-          sx={{ textTransform: 'none' }}
-        >
-          CLEAR ALL
-        </Button>
-      </Box>
-      
-      {treeData.length > 0 ? (
-        <RichTreeView
-          items={treeData}
-          selectedItems={selectedItems}
-          onSelectedItemsChange={handleSelectionChange}
-          multiSelect
-          selectionPropagation={selectionPropagation}
-          defaultExpandedItems={defaultExpandedItems}
-          checkboxSelection
-          sx={{
-            '& .MuiTreeItem-label': {
-              fontSize: '0.875rem',
-            },
-            '& .MuiTreeItem-root': {
-              marginBottom: '4px',
-            },
+    <Card sx={{ 
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: 300,  // Set minimum width
+      maxWidth: '100%', // Prevent horizontal expansion
+      overflow: 'hidden' // Contain all content
+    }}>
+      <CardContent sx={{ 
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        p: 1,
+        overflow: 'hidden' // Important for scroll containment
+      }}>
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            mb: 1,
+            flexShrink: 0
           }}
-        />
-      ) : (
-        <Typography variant="body2" color="text.secondary">
-          No data available
-        </Typography>
-      )}
-    </Box>
+        >
+          <Typography variant="h6" noWrap>{title}</Typography>
+          <Button 
+            variant="text" 
+            onClick={handleClearAll}
+            sx={{ textTransform: 'none', ml: 1 }}
+          >
+            CLEAR ALL
+          </Button>
+        </Box>
+        
+        {treeData.length > 0 ? (
+          <Box sx={{ 
+            flexGrow: 1,
+            overflow: 'auto', // Enables both vertical and horizontal scrollbars
+            minHeight: 0, // Important for proper scroll container behavior
+            '&::-webkit-scrollbar': {
+              height: '8px',
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: '#bdbdbd',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: '#f1f1f1',
+            }
+          }}>
+            <RichTreeView
+              items={treeData}
+              selectedItems={selectedItems}
+              onSelectedItemsChange={handleSelectionChange}
+              multiSelect
+              selectionPropagation={selectionPropagation}
+              defaultExpandedItems={defaultExpandedItems}
+              checkboxSelection
+              sx={{
+                '& .MuiTreeItem-label': {
+                  fontSize: '0.875rem',
+                  whiteSpace: 'nowrap', // Prevent text wrapping
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  minWidth: 0
+                },
+                '& .MuiTreeItem-root': {
+                  marginBottom: '2px',
+                  minWidth: 0
+                },
+                width: 'max-content', // Allow horizontal scrolling when needed
+                minWidth: '100%' // Ensure it fills container
+              }}
+            />
+          </Box>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            No data available
+          </Typography>
+        )}
+      </CardContent>
+
+    </Card>
   );
 };
 
