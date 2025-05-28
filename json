@@ -1,0 +1,101 @@
+{
+  "objectCount": [
+    { "type": "Table", "count": 200 },
+    { "type": "Columns", "count": 400 },
+    { "type": "File", "count": 120 },
+    { "type": "Report", "count": 75 },
+    { "type": "Job", "count": 45 }
+  ],
+  "facetCount": {
+    "Table": {
+      "count": 160,
+      "assetNames": {
+        "racer": {
+          "count": 100,
+          "dbNames": {
+            "db1": { "count": 60 },
+            "db2": { "count": 40 }
+          }
+        },
+        "cedar": {
+          "count": 60,
+          "dbNames": {
+            "cedardb": { "count": 60 }
+          }
+        }
+      }
+    },
+    "File": {
+      "count": 100,
+      "assetNames": {
+        "glacier": {
+          "count": 50,
+          "dbNames": {
+            "archive1": { "count": 25 },
+            "archive2": { "count": 25 }
+          }
+        },
+        "s3": {
+          "count": 50,
+          "dbNames": {
+            "bucket1": { "count": 50 }
+          }
+        }
+      }
+    },
+    "Columns": {
+      "count": 200,
+      "assetNames": {
+        "asset1": {
+          "count": 200,
+          "dbNames": {
+            "db1": {
+              "count": 120,
+              "rsrcNames": {
+                "rsrc1": { "count": 50 },
+                "rsrc2": { "count": 70 }
+              }
+            },
+            "db2": {
+              "count": 80,
+              "rsrcNames": {
+                "rsrc3": { "count": 80 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Data Platform": {
+      "count": 30,
+      "assetNames": {
+        "platformX": { "count": 10 },
+        "platformY": { "count": 20 }
+      }
+    },
+    "Report": { "count": 75 },
+    "Tag": { "count": 90 },
+    "Schema": { "count": 60 },
+    "Job": { "count": 45 }
+  },
+  "searchDaoList": [
+    {
+      "name": "CustomerTable",
+      "type": "Table",
+      "asset_nm": "racer",
+      "db_nm": "db1",
+      "description": "Stores customer info"
+    },
+    {
+      "name": "TransactionFile",
+      "type": "File",
+      "asset_nm": "s3",
+      "db_nm": "bucket1"
+    },
+    {
+      "name": "SchemaReport2023",
+      "type": "Report",
+      "asset_nm": "core"
+    }
+  ]
+}
