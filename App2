@@ -1,0 +1,151 @@
+import React from 'react';
+// import FacetFilter from './FacetFilter';
+// import { Box } from '@mui/material';
+// import ReportList from './ReportList';
+import { Grid, Card, CardContent, Typography, Box } from '@mui/material';
+import HierarchicalFilter from './HierarchicalFilter';
+import AdditionalFilter from './AdditionalFilter';
+
+const facetCount = {
+  Table: {
+    count: 100,
+    assetNames: {
+      "Cedar 2.0 Data Repository": {
+        count: 4,
+        dbNames: {
+          "nypd_egrc_dw_cedar": {
+            count: 4,
+            rsrcNames: {
+              "Cedar 2.0 Data Repository": {
+                count: 4
+              },
+              "Cedar 2.0 Data Repository - Data Mart": {
+                count: 4
+              }
+            }
+          }
+        }
+      },
+      "eGRC OpenPages Platform": {
+        count: 16,
+        dbNames: {
+          "hypd_egrc7_new": {
+            count: 16,
+            rsrcNames: {}
+          }
+        }
+      },
+    }
+  },
+  Columns: { count: 0, assetNames: {} },
+  View: { count: 0, assetNames: {} },
+};
+
+const ownerDept = {
+  "IT Risk Management": 10,
+  "IT Security": 5,
+  "Compliance": 8,
+  "Audit": 3,
+  "Data Governance": 6,
+  "Business Continuity": 4
+};
+
+const App = () => {
+  
+  return (
+      <Box sx={{ p: 3, height: '100vh' }}>
+        <Grid container spacing={3} sx={{ height: '100%' }}>
+          {/* First Column - 2/12 width */}
+          <Grid item xs={2}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box sx={{ overflow: 'hidden' }}>
+                  <HierarchicalFilter facetData={facetCount} title="Type"  />
+                </Box>
+                <Box>
+                <AdditionalFilter data={ownerDept} title="Owner Department" />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+  
+          {/* Second Column - 7/12 width */}
+          <Grid item xs={7}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Main Content
+                </Typography>
+                <Box sx={{ height: 'calc(100% - 40px)', overflow: 'auto' }}>
+                  {/* Your main content goes here */}
+                  <Typography paragraph>
+                    This is the main content area (7/12 width).
+                  </Typography>
+                  <Typography paragraph>
+                    You can place your primary application content here.
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+  
+          {/* Third Column - 3/12 width */}
+          <Grid item xs={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Details Panel
+                </Typography>
+                <Box sx={{ height: 'calc(100% - 40px)', overflow: 'auto' }}>
+                  {/* Your details panel content goes here */}
+                  <Typography paragraph>
+                    This is the details panel (3/12 width).
+                  </Typography>
+                  <Typography paragraph>
+                    You can show additional information or actions here.
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+
+    // <div style={{ padding: '20px' }}>
+    //   <h1>Report Management</h1>
+    //   <p>Manage your reports efficiently.</p>
+    //   <ReportList />
+    // </div>
+  );
+  // const [objectCount, setObjectCount] = useState({});
+  // const [selectedTypes, setSelectedTypes] = useState([]);
+
+  // useEffect(() => {
+  //   // Simulate API call
+  //   const fetchData = async () => {
+  //     const data = {
+  //       Table: 12341,
+  //       Job: 23123,
+  //       View: 900,
+  //     };
+  //     setObjectCount(data);
+  //   };
+  //   fetchData();
+  // }, []);
+
+  // return (
+  //   <Box sx={{ display: 'flex' }}>
+  //     <FacetFilter
+  //       objectCount={objectCount}
+  //       selectedTypes={selectedTypes}
+  //       setSelectedTypes={setSelectedTypes}
+  //     />
+  //     <Box sx={{ flex: 1, p: 2 }}>
+  //       {/* Your main content goes here */}
+  //       <pre>Selected Types: {JSON.stringify(selectedTypes)}</pre>
+  //     </Box>
+  //   </Box>
+  // );
+};
+
+export default App;
