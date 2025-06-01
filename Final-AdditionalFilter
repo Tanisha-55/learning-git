@@ -1,0 +1,104 @@
+import React, { useState } from 'react';
+import { Box, Typography, Button, Checkbox, FormControlLabel, Card, CardContent } from '@mui/material';
+
+const AdditionalFilter = ({ 
+  data = {}, 
+  title = "Owner Department", 
+  onSelectionChange 
+}) => {
+  const [selectedItems, setSelectedItems] = useState([]);
+
+  const handleToggle = (item) => {
+    const currentIndex = selectedItems.indexOf(item);
+    const newSelectedItems = [...selectedItems];
+
+    if (currentIndex === -1) {
+      newSelectedItems.push(item);
+    } else {
+      newSelectedItems.splice(currentIndex, 1);
+    }
+
+    setSelectedItems(newSelectedItems);
+    if (onSelectionChange) {
+      onSelectionChange(newSelectedItems);
+    }
+  };
+
+  const handleClearAll = () => {
+    setSelectedItems([]);
+    if (onSelectionChange) {
+      onSelectionChange([]);
+    }
+  };
+
+  return (
+    <Card
+    sx={{ 
+      // height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: 300,
+      maxWidth: 300,
+      overflow: 'hidden'
+    }}>
+      <CardContent sx={{ 
+        // height: '100%', display: 'flex', flexDirection: 'column' 
+        display: 'flex',
+        flexDirection: 'column',
+        p: 1,
+        overflow: 'hidden',
+        maxWidth: 300,
+        }}>
+        <Box sx={{ 
+           display: 'flex', 
+           justifyContent: 'space-between', 
+           alignItems: 'center',
+           mb: 1,
+           flexShrink: 0
+        }}>
+          <Typography variant="h6">{title}</Typography>
+          <Button 
+            variant="text" 
+            onClick={handleClearAll}
+            sx={{ textTransform: 'none' }}
+            // disabled={selectedItems.length === 0}
+          >
+            CLEAR ALL
+          </Button>
+        </Box>
+        
+        <Box sx={{ overflow: 'auto', flexGrow: 1 ,
+          minHeight: 0, // Essential for scroll container
+          maxHeight: 'calc(100vh - 300px)',
+          maxWidth: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          {Object.entries(data).map(([name, count]) => (
+            <FormControlLabel
+              key={name}
+              control={
+                <Checkbox
+                  checked={selectedItems.includes(name)}
+                  onChange={() => handleToggle(name)}
+                  color="primary"
+                />
+              }
+              label={`${name} (${count})`}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                ml: 0,
+                '& .MuiTypography-root': {
+                  fontSize: '0.875rem'
+                }
+              }}
+            />
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default AdditionalFilter;
