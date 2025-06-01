@@ -1,0 +1,188 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Grid, Box } from '@mui/material';
+import HierarchicalFilter from './HierarchicalFilter';
+import AdditionalFilter from './AdditionalFilter';
+import SearchResults from './SearchResults';
+
+const App = () => {
+  // Sample API data
+  const apiResponse = {
+        facetData: {
+          Table: {
+            count: 100,
+            assetNames: {
+              "Cedar 2.0 Data Repository": {
+                count: 4,
+                dbNames: {
+                  "nypd_egrc_dw_cedar": {
+                    count: 4,
+                    rsrcNames: {
+                      "Cedar 2.0 Data Repository": {
+                        count: 4
+                      },
+                      "Cedar 2.0 Data Repository - Data Mart": {
+                        count: 4
+                      }
+                    }
+                  }
+                }
+              },
+              "eGRC OpenPages Platform": {
+                count: 16,
+                dbNames: {
+                  "hypd_egrc7_new": {
+                    count: 16,
+                    rsrcNames: {}
+                  }
+                }
+              },
+              "eGRC OpenPages Platform - Data Mart": {
+                count: 16,
+                dbNames: {
+                  "hypd_egrc7_new": {
+                    count: 16,
+                    rsrcNames: {}
+                  }
+                }
+              }
+            }
+          },
+          Columns: {
+            count: 4,
+            assetNames: {
+              "Cedar 2.0 Data Repository": {
+                count: 4,
+                dbNames: {
+                  "nypd_egrc_dw_cedar3": {
+                    count: 4,
+                    rsrcNames: {
+                      "Cedar 2.0 Data Repository5": {
+                        count: 4
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          View: {
+            count: 4,
+            assetNames: {
+              "Cedar 2.0 Data Repository": {
+                count: 4,
+                dbNames: {
+                  "nypd_egrc_dw_cedar4": {
+                    count: 4,
+                    rsrcNames: {
+                      "Cedar 2.0 Data Repository6": {
+                        count: 4
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        searchDaoList: [
+          {type: "Table", ownerDept: "IT Risk Management", assetName: "Cedar 2.0 Data Repository", dbName: "nypd_egrc_dw_cedar", rsrcName: "Cedar 2.0 Data Repository" },
+          {type: "Table", assetName: "Cedar 2.0 Data Repository", dbName: "nypd_egrc_dw_cedar", rsrcName: "Cedar 2.0 Data Repository - Data Mart" },
+          {type: "Table", ownerDept: "Operations", assetName: "eGRC OpenPages Platform", dbName: "hypd_egrc7_new", rsrcName: []},
+          {type: "Table", ownerDept: "IT Security", assetName: "eGRC OpenPages Platform - Data Mart", dbName: "hypd_egrc7_new", rsrcName: []},
+          {type: "Columns", ownerDept: "Data Governance", assetName: "Cedar 2.0 Data Repository", dbName: "nypd_egrc_dw_cedar3", rsrcName: "Cedar 2.0 Data Repository5" },
+          {type: "View", ownerDept: "Compliance", assetName: "Cedar 2.0 Data Repository", dbName: "nypd_egrc_dw_cedar4", rsrcName: "Cedar 2.0 Data Repository6" }
+        ],
+        ownerDept: {
+          "IT Risk Management": 10,
+          "IT Security": 5,
+          "Data Governance": 8,
+          "Compliance": 3,
+          "Operations": 2,
+        }
+      };
+
+const [selectedFacets, setSelectedFacets] = useState([]);
+const [selectedOwnerDepts, setSelectedOwnerDepts] = useState([]);
+const [filteredResults, setFilteredResults] = useState(apiResponse.searchDaoList);
+const prevFilters = useRef({});
+
+// Filter data function
+const filterData = useCallback((items, facets, ownerDepts) => {
+  // If no filters are selected, return all items
+  if (facets.length === 0 && ownerDepts.length === 0) {
+    return items;
+  }
+
+  return items.filter(item => {
+    // Check hierarchical filters
+    const facetMatch = facets.length === 0 || facets.some(facet => {
+      const parts = facet.split('|');
+      return (
+        item.type === parts[0] &&
+        (parts.length < 2 || item.assetName === parts[1]) &&
+        (parts.length < 3 || item.dbName === parts[2]) &&
+        (parts.length < 4 || item.rsrcName === parts[3])
+      );
+    });
+
+    // Check owner department filter
+    const ownerDeptMatch = ownerDepts.length === 0 || 
+                          (item.ownerDept && ownerDepts.includes(item.ownerDept));
+
+    return facetMatch && ownerDeptMatch;
+  });
+}, []);
+
+// Apply filters with debouncing
+useEffect(() => {
+  const currentFilters = {
+    facets: JSON.stringify(selectedFacets),
+    ownerDepts: JSON.stringify(selectedOwnerDepts)
+  };
+
+  // Skip if filters haven't changed
+  if (JSON.stringify(prevFilters.current) === JSON.stringify(currentFilters)) {
+    return;
+  }
+
+  prevFilters.current = currentFilters;
+  
+  const timer = setTimeout(() => {
+    const results = filterData(
+      apiResponse.searchDaoList, 
+      selectedFacets, 
+      selectedOwnerDepts
+    );
+    setFilteredResults(results);
+  }, 50);
+
+  return () => clearTimeout(timer);
+}, [selectedFacets, selectedOwnerDepts, apiResponse.searchDaoList, filterData]);
+
+return (
+  <Box sx={{ flexGrow: 1, p: 3, height: '100vh', backgroundColor: '#f5f5f5' }}>
+    <Grid container spacing={3} sx={{ height: '100%' }}>
+      <Grid item xs={2.4}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 3 }}>
+          <HierarchicalFilter 
+            facetData={apiResponse.facetData} 
+            title="Common Filter"
+            selectedFacets={selectedFacets}
+            onSelectionChange={setSelectedFacets}
+          />
+          <AdditionalFilter 
+            data={apiResponse.ownerDept} 
+            title="Owner Department"
+            onSelectionChange={setSelectedOwnerDepts}
+          />
+        </Box>
+      </Grid>
+      <Grid item xs={9.6}>
+        <SearchResults data={filteredResults} />
+      </Grid>
+    </Grid>
+  </Box>
+);
+};
+
+export default App;
