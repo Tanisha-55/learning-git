@@ -1,0 +1,78 @@
+import React from 'react';
+import { Box, Typography, Button, Checkbox, FormControlLabel, Card, CardContent } from '@mui/material';
+
+const AdditionalFilter = ({ 
+  data = {}, 
+  title = "Owner Department", 
+  selectedItems = [], 
+  onSelectionChange 
+}) => {
+  const handleToggle = (item) => {
+    const currentIndex = selectedItems.indexOf(item);
+    const newSelectedItems = [...selectedItems];
+
+    if (currentIndex === -1) {
+      newSelectedItems.push(item);
+    } else {
+      newSelectedItems.splice(currentIndex, 1);
+    }
+
+    onSelectionChange(newSelectedItems);
+  };
+
+  const handleClearAll = () => {
+    onSelectionChange([]);
+  };
+
+  return (
+    <Card sx={{ height: '100%' }}>
+      <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          mb: 2
+        }}>
+          <Typography variant="h6">{title}</Typography>
+          <Button 
+            variant="text" 
+            onClick={handleClearAll}
+            sx={{ textTransform: 'none' }}
+            disabled={selectedItems.length === 0}
+          >
+            CLEAR ALL
+          </Button>
+        </Box>
+        
+        <Box sx={{ overflow: 'auto', flexGrow: 1 }}>
+          {Object.entries(data).map(([name, count]) => (
+            <FormControlLabel
+              key={name}
+              control={
+                <Checkbox
+                  checked={selectedItems.includes(name)}
+                  onChange={() => handleToggle(name)}
+                  color="primary"
+                  disabled={count === 0}
+                />
+              }
+              label={`${name} (${count})`}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                ml: 0,
+                '& .MuiTypography-root': {
+                  fontSize: '0.875rem'
+                },
+                opacity: count === 0 ? 0.5 : 1,
+                cursor: count === 0 ? 'not-allowed' : 'default'
+              }}
+            />
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default AdditionalFilter;
