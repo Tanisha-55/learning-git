@@ -1,0 +1,155 @@
+
+import React, { useMemo } from 'react';
+import { RichTreeView } from '@mui/x-tree-view/RichTreeView';
+import { Box, Typography, Button, Card, CardContent } from '@mui/material';
+
+const HierarchicalFilter = ({ 
+  facetData = {}, 
+  title = "Common Filter", 
+  selectedFacets = [], 
+  onSelectionChange 
+}) => {
+  // Convert facetData to tree structure
+  const treeData = useMemo(() => {
+    const convertToTree = (data, parentPath = '') => {
+      if (!data || typeof data !== 'object') return [];
+      
+      return Object.entries(data).map(([key, value]) => {
+        if (!value || typeof value !== 'object' || value.count === undefined) return null;
+
+        const nodeId = parentPath ? `${parentPath}|${key}` : key;
+        const label = `${key} (${value.count})`;
+        let children = [];
+        
+        // Handle nested properties
+        if (value.assetNames) {
+          children = convertToTree(value.assetNames, nodeId);
+        } else if (value.dbNames) {
+          children = convertToTree(value.dbNames, nodeId);
+        } else if (value.rsrcNames) {
+          children = convertToTree(value.rsrcNames, nodeId);
+        }
+        
+        return { 
+          id: nodeId, 
+          label, 
+          children: children.length ? children : undefined,
+          disabled: value.count === 0 // Disable items with 0 count
+        };
+      }).filter(Boolean);
+    };
+
+    return convertToTree(facetData);
+  }, [facetData]);
+
+  // Get default expanded items
+  const defaultExpandedItems = useMemo(() => {
+    const getAllIds = (items) => items.flatMap(item => [item.id, ...(item.children ? getAllIds(item.children) : [])]);
+    return treeData.length ? getAllIds(treeData) : [];
+  }, [treeData]);
+
+  const handleClearAll = () => {
+    onSelectionChange([]);
+  };
+  const selectionPropagation = {
+    parents: true,
+    descendants: true,
+  }
+
+  return (
+    <Card sx={{ 
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: 300,
+      maxWidth: '100%',
+      overflow: 'hidden'
+    }}>
+      <CardContent sx={{ 
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        p: 1,
+        overflow: 'hidden'
+      }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          mb: 1,
+          flexShrink: 0
+        }}>
+          <Typography variant="h6" noWrap>{title}</Typography>
+          <Button 
+            onClick={handleClearAll} 
+            disabled={!selectedFacets.length}
+            sx={{ textTransform: 'none' }}
+          >
+            CLEAR ALL
+          </Button>
+        </Box>
+        
+        {treeData.length ? (
+          <Box sx={{ 
+            flexGrow: 1,
+            overflow: 'auto',
+            minHeight: 0,
+            maxHeight: 'calc(100vh - 300px)',
+            border: '1px solid #e0e0e0',
+            borderRadius: '4px',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: '#f1f1f1',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: '#bdbdbd',
+              borderRadius: '4px',
+              '&:hover': {
+                background: '#9e9e9e',
+              }
+            }
+          }}>
+            <RichTreeView
+              items={treeData}
+              selectedItems={selectedFacets}
+              onSelectedItemsChange={(event, items) => onSelectionChange(items)}
+              multiSelect
+              selectionPropagation={selectionPropagation}
+              defaultExpandedItems={defaultExpandedItems}
+              checkboxSelection
+              sx={{
+                '& .MuiTreeItem-label': {
+                  fontSize: '0.875rem',
+                  whiteSpace: 'nowrap',
+                  padding: '4px 0',
+                  minWidth: '100%',
+                },
+                '& .MuiTreeItem-root': {
+                  marginBottom: '2px',
+                  minWidth: 'max-content',
+                  width: 'auto',
+                },
+                width: 'max-content',
+                minWidth: '100%',
+                p: 1,
+                display: 'block',
+                '& .Mui-disabled': {
+                  opacity: 0.5,
+                  cursor: 'not-allowed'
+                }
+              }}
+            />
+          </Box>
+        ) : (
+          <Typography variant="body2" color="text.secondary">No data available</Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default HierarchicalFilter;
