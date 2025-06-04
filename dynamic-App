@@ -1,0 +1,293 @@
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Grid, Box, Typography } from '@mui/material';
+import HierarchicalFilter from './HierarchicalFilter';
+import AdditionalFilter from './AdditionalFilter';
+import SearchResults from './SearchResults';
+
+const App = () => {
+  // Initial API response data
+  const initialApiResponse = {
+      facetData: {
+        Table: {
+          count: 100,
+          assetNames: {
+            "Cedar 2.0 Data Repository": {
+              count: 4,
+              dbNames: {
+                "nypd_egrc_dw_cedar": {
+                  count: 4,
+                  rsrcNames: {
+                    "Cedar 2.0 Data Repository": {
+                      count: 4
+                    },
+                    "Cedar 2.0 Data Repository - Data Mart": {
+                      count: 4
+                    }
+                  }
+                }
+              }
+            },
+            "eGRC OpenPages Platform": {
+              count: 16,
+              dbNames: {
+                "hypd_egrc7_new": {
+                  count: 16,
+                  rsrcNames: {}
+                }
+              }
+            },
+            "eGRC OpenPages Platform - Data Mart": {
+              count: 16,
+              dbNames: {
+                "hypd_egrc7_new": {
+                  count: 16,
+                  rsrcNames: {}
+                }
+              }
+            }
+          }
+        },
+        Columns: {
+          count: 4,
+          assetNames: {
+            "Cedar 2.0 Data Repository": {
+              count: 4,
+              dbNames: {
+                "nypd_egrc_dw_cedar3": {
+                  count: 4,
+                  rsrcNames: {
+                    "Cedar 2.0 Data Repository5": {
+                      count: 4
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        View: {
+          count: 4,
+          assetNames: {
+            "Cedar 2.0 Data Repository": {
+              count: 4,
+              dbNames: {
+                "nypd_egrc_dw_cedar4": {
+                  count: 4,
+                  rsrcNames: {
+                    "Cedar 2.0 Data Repository6": {
+                      count: 4
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      searchDaoList: [
+        {type: "Table", ownerDept: "IT Risk Management", assetName: "Cedar 2.0 Data Repository", dbName: "nypd_egrc_dw_cedar", rsrcName: "Cedar 2.0 Data Repository" },
+        {type: "Table", assetName: "Cedar 2.0 Data Repository", dbName: "nypd_egrc_dw_cedar", rsrcName: "Cedar 2.0 Data Repository - Data Mart" },
+        {type: "Table", ownerDept: "Operations", assetName: "eGRC OpenPages Platform", dbName: "hypd_egrc7_new", rsrcName: []},
+        {type: "Table", ownerDept: "IT Security", assetName: "eGRC OpenPages Platform - Data Mart", dbName: "hypd_egrc7_new", rsrcName: []},
+        {type: "Columns", ownerDept: "Data Governance", assetName: "Cedar 2.0 Data Repository", dbName: "nypd_egrc_dw_cedar3", rsrcName: "Cedar 2.0 Data Repository5" },
+        {type: "View", ownerDept: "Compliance", assetName: "Cedar 2.0 Data Repository", dbName: "nypd_egrc_dw_cedar4", rsrcName: "Cedar 2.0 Data Repository6" }
+      ],
+      ownerDept: {
+        "IT Risk Management": 10,
+        "IT Security": 5,
+        "Data Governance": 8,
+        "Compliance": 3,
+        "Operations": 2,
+      }
+    };
+
+  const [apiResponse, setApiResponse] = useState(initialApiResponse);
+  const [selectedFacets, setSelectedFacets] = useState([]);
+  const [selectedOwnerDepts, setSelectedOwnerDepts] = useState([]);
+  const [filteredResults, setFilteredResults] = useState(initialApiResponse.searchDaoList);
+  const [hierarchicalFilterData, setHierarchicalFilterData] = useState(initialApiResponse.facetData);
+  const [ownerDeptData, setOwnerDeptData] = useState(initialApiResponse.ownerDept);
+
+  // Function to count matching items for hierarchical facets
+  const countHierarchicalItems = (data, path) => {
+    const parts = path.split('|');
+    return data.filter(item => {
+      return (
+        item.type === parts[0] &&
+        (parts.length < 2 || item.assetName === parts[1]) &&
+        (parts.length < 3 || item.dbName === parts[2]) &&
+        (parts.length < 4 || item.rsrcName === parts[3])
+      );
+    }).length;
+  };
+
+  // Recursive function to update hierarchical filter counts
+  const updateHierarchicalCounts = (data, facetNode, path = '') => {
+    const updatedNode = { ...facetNode };
+    
+    Object.entries(updatedNode).forEach(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        const nodePath = path ? `${path}|${key}` : key;
+        
+        if ('count' in value) {
+          // Update count for this node
+          updatedNode[key] = {
+            ...value,
+            count: countHierarchicalItems(data, nodePath)
+          };
+        }
+        
+        // Recurse through children
+        if (value.assetNames) {
+          updatedNode[key].assetNames = updateHierarchicalCounts(data, value.assetNames, nodePath);
+        }
+        if (value.dbNames) {
+          updatedNode[key].dbNames = updateHierarchicalCounts(data, value.dbNames, nodePath);
+        }
+        if (value.rsrcNames) {
+          updatedNode[key].rsrcNames = updateHierarchicalCounts(data, value.rsrcNames, nodePath);
+        }
+      }
+    });
+    
+    return updatedNode;
+  };
+
+  // Update owner department counts
+  const updateOwnerDeptCounts = (data) => {
+    const counts = {};
+    data.forEach(item => {
+      if (item.ownerDept) {
+        counts[item.ownerDept] = (counts[item.ownerDept] || 0) + 1;
+      }
+    });
+    return counts;
+  };
+
+  // Filter data based on both filters
+  const filterData = useCallback(() => {
+    // Apply owner department filter first
+    const deptFiltered = selectedOwnerDepts.length > 0
+      ? apiResponse.searchDaoList.filter(item => selectedOwnerDepts.includes(item.ownerDept))
+      : apiResponse.searchDaoList;
+    
+    // Apply hierarchical filter
+    const fullyFiltered = selectedFacets.length > 0
+      ? deptFiltered.filter(item => {
+          return selectedFacets.some(facetId => {
+            const parts = facetId.split('|');
+            return (
+              item.type === parts[0] &&
+              (parts.length < 2 || item.assetName === parts[1]) &&
+              (parts.length < 3 || item.dbName === parts[2]) &&
+              (parts.length < 4 || item.rsrcName === parts[3])
+            );
+          });
+        })
+      : deptFiltered;
+    
+    setFilteredResults(fullyFiltered);
+    
+    // Update hierarchical filter counts based on department-filtered data
+    const updatedHierarchical = updateHierarchicalCounts(
+      deptFiltered, 
+      apiResponse.facetData
+    );
+    setHierarchicalFilterData(updatedHierarchical);
+    
+    // Update owner department counts based on hierarchical-filtered data
+    const hierarchicalFiltered = selectedFacets.length > 0
+      ? apiResponse.searchDaoList.filter(item => {
+          return selectedFacets.some(facetId => {
+            const parts = facetId.split('|');
+            return (
+              item.type === parts[0] &&
+              (parts.length < 2 || item.assetName === parts[1]) &&
+              (parts.length < 3 || item.dbName === parts[2]) &&
+              (parts.length < 4 || item.rsrcName === parts[3])
+            );
+          });
+        })
+      : apiResponse.searchDaoList;
+    
+    const updatedOwnerDepts = updateOwnerDeptCounts(hierarchicalFiltered);
+    setOwnerDeptData(prev => ({ 
+      ...prev, 
+      ...updatedOwnerDepts,
+      // Preserve all departments with their updated counts
+      ...Object.fromEntries(Object.keys(apiResponse.ownerDept).map(dept => [
+        dept, 
+        updatedOwnerDepts[dept] || 0
+      ]))
+    }));
+  }, [selectedFacets, selectedOwnerDepts, apiResponse]);
+
+  // Apply filters when selections change
+  useEffect(() => {
+    filterData();
+  }, [selectedFacets, selectedOwnerDepts, filterData]);
+
+  // Simulate backend data refresh (in a real app, this would fetch new data)
+  const handleSearch = (keyword) => {
+    // Filter data based on search keyword
+    const filteredData = initialApiResponse.searchDaoList.filter(item => 
+      item.type.includes(keyword) || 
+      item.assetName?.includes(keyword) ||
+      item.dbName?.includes(keyword) ||
+      item.ownerDept?.includes(keyword)
+    );
+    
+    // Update API response
+    const newResponse = {
+      ...initialApiResponse,
+      searchDaoList: filteredData
+    };
+    
+    setApiResponse(newResponse);
+    setSelectedFacets([]);
+    setSelectedOwnerDepts([]);
+    setHierarchicalFilterData(newResponse.facetData);
+    setOwnerDeptData(newResponse.ownerDept);
+  };
+
+  return (
+    <Box sx={{ flexGrow: 1, p: 3, height: '100vh', backgroundColor: '#f5f5f5' }}>
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+        <input 
+          type="text" 
+          placeholder="Search..." 
+          style={{ padding: '8px 12px', width: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
+          onChange={(e) => handleSearch(e.target.value)}
+        />
+        <Typography variant="subtitle1" sx={{ ml: 2 }}>
+          {filteredResults.length} results
+        </Typography>
+      </Box>
+      
+      <Grid container spacing={3} sx={{ height: 'calc(100vh - 120px)' }}>
+        <Grid item xs={2.4}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 3 }}>
+            <HierarchicalFilter 
+              facetData={hierarchicalFilterData} 
+              title="Common Filter"
+              selectedFacets={selectedFacets}
+              onSelectionChange={setSelectedFacets}
+            />
+            <AdditionalFilter 
+              data={ownerDeptData} 
+              title="Owner Department"
+              selectedItems={selectedOwnerDepts}
+              onSelectionChange={setSelectedOwnerDepts}
+            />
+          </Box>
+        </Grid>
+        <Grid item xs={9.6}>
+          <SearchResults data={filteredResults} />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+export default App;
