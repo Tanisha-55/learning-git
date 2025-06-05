@@ -1,0 +1,151 @@
+const [selectedFacets, setSelectedFacets] = useState([]);
+  const [selectedOwnerDepts, setSelectedOwnerDepts] = useState([]);
+  const [filteredResults, setFilteredResults] = useState(filterData);
+  const [hierarchicalFilterData, setHierarchicalFilterData] = useState(facetData);
+  const [ownerDeptAllData, setOwnerDeptAllData] = useState(ownerDeptData);
+
+  // Function to count matching items for hierarchical facets
+  const countHierarchicalItems = (data, path) => {
+    const parts = path.split('|');
+    return data.filter(item => {
+      return (
+        item.type === parts[0] &&
+        (parts.length < 2 || item.assetName === parts[1]) &&
+        (parts.length < 3 || item.dbName === parts[2]) &&
+        (parts.length < 4 || item.rsrcName === parts[3])
+      );
+    }).length;
+  };
+
+  // Recursive function to update hierarchical filter counts
+  const updateHierarchicalCounts = (data, facetNode, path = '') => {
+    const updatedNode = { ...facetNode };
+    
+    Object.entries(updatedNode).forEach(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        const nodePath = path ? `${path}|${key}` : key;
+        
+        if ('count' in value) {
+          // Update count for this node
+          updatedNode[key] = {
+            ...value,
+            count: countHierarchicalItems(data, nodePath)
+          };
+        }
+        
+        // Recurse through children
+        if (value.assetNames) {
+          updatedNode[key].assetNames = updateHierarchicalCounts(data, value.assetNames, nodePath);
+        }
+        if (value.dbNames) {
+          updatedNode[key].dbNames = updateHierarchicalCounts(data, value.dbNames, nodePath);
+        }
+        if (value.rsrcNames) {
+          updatedNode[key].rsrcNames = updateHierarchicalCounts(data, value.rsrcNames, nodePath);
+        }
+      }
+    });
+    
+    return updatedNode;
+  };
+
+  // Update owner department counts
+  const updateOwnerDeptCounts = (data) => {
+    const counts = {};
+    data.forEach(item => {
+      if (item.ownerDeptCount) {
+        counts[item.ownerDeptCount] = (counts[item.ownerDeptCount] || 0) + 1;
+      }
+    });
+    return counts;
+  };
+
+  // Filter data based on both filters
+  const filterAllData = useCallback(() => {
+    // Apply owner department filter first
+    const deptFiltered = selectedOwnerDepts.length > 0
+      ? apiResponse.searchDaoList.filter(item => selectedOwnerDepts.includes(item.ownerDeptCount))
+      : apiResponse.searchDaoList;
+    
+    // Apply hierarchical filter
+    const fullyFiltered = selectedFacets.length > 0
+      ? deptFiltered.filter(item => {
+          return selectedFacets.some(facetId => {
+            const parts = facetId.split('|');
+            return (
+              item.type === parts[0] &&
+              (parts.length < 2 || item.assetName === parts[1]) &&
+              (parts.length < 3 || item.dbName === parts[2]) &&
+              (parts.length < 4 || item.rsrcName === parts[3])
+            );
+          });
+        })
+      : deptFiltered;
+    
+    setFilteredResults(fullyFiltered);
+    
+    // Update hierarchical filter counts based on department-filtered data
+    const updatedHierarchical = updateHierarchicalCounts(
+      deptFiltered, 
+      apiResponse.facetCount
+    );
+    setHierarchicalFilterData(updatedHierarchical);
+    
+    // Update owner department counts based on hierarchical-filtered data
+    const hierarchicalFiltered = selectedFacets.length > 0
+      ? apiResponse.searchDaoList.filter(item => {
+          return selectedFacets.some(facetId => {
+            const parts = facetId.split('|');
+            return (
+              item.type === parts[0] &&
+              (parts.length < 2 || item.assetName === parts[1]) &&
+              (parts.length < 3 || item.dbName === parts[2]) &&
+              (parts.length < 4 || item.rsrcName === parts[3])
+            );
+          });
+        })
+      : apiResponse.searchDaoList;
+    
+    const updatedOwnerDepts = updateOwnerDeptCounts(hierarchicalFiltered);
+    setOwnerDeptAllData(prev => ({ 
+      ...prev, 
+      ...updatedOwnerDepts,
+      // Preserve all departments with their updated counts
+      ...Object.fromEntries(Object.keys(apiResponse.ownerDeptCount).map(dept => [
+        dept, 
+        updatedOwnerDepts[dept] || 0
+      ]))
+    }));
+  }, [selectedFacets, selectedOwnerDepts, apiResponse]);
+
+  // Apply filters when selections change
+  useEffect(() => {
+    filterAllData();
+  }, [selectedFacets, selectedOwnerDepts, filterAllData]);
+  
+  return (
+    <Box sx={{ flexGrow: 1, p: 3, height: '100vh', backgroundColor: '#f5f5f5' }}>
+      <Grid container spacing={3} sx={{ height: 'calc(100vh - 120px)' }}>
+        <Grid item xs={2.4}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 3 }}>
+            <HierarchicalFilter 
+              facetCount={hierarchicalFilterData} 
+              title="Common Filter"
+              selectedFacets={selectedFacets}
+              onSelectionChange={setSelectedFacets}
+            />
+            <AdditionalFilter 
+              data={ownerDeptAllData} 
+              title="Owner Department"
+              selectedItems={selectedOwnerDepts}
+              onSelectionChange={setSelectedOwnerDepts}
+            />
+          </Box>
+        </Grid>
+        <Grid item xs={9.6}>
+          <SearchResults data={filteredResults} />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
