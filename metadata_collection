@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Stepper, 
   Step, 
@@ -21,7 +21,12 @@ import {
   InputAdornment,
   Collapse,
   Chip,
-  Divider
+  Divider,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  CircularProgress
 } from '@mui/material';
 import { 
   ArrowBack as ArrowBackIcon, 
@@ -32,10 +37,12 @@ import {
   Storage as StorageIcon,
   Info as InfoIcon,
   Close as CloseIcon,
-  ArrowDropDown as ArrowDropDownIcon
+  ArrowDropDown as ArrowDropDownIcon,
+  InsertDriveFile as FileIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 
-// Dummy data for autocomplete options
+// Dummy data
 const dummyData = {
   assets: [
     { id: 1, name: 'Customer Data', description: 'Customer information and profiles', databases: [
@@ -80,8 +87,14 @@ const MetadataCollectionStepper = () => {
   const [submitted, setSubmitted] = useState(false);
   const [assets, setAssets] = useState([...dummyData.assets]);
   const [showInfo, setShowInfo] = useState(false);
-  const [showDatabaseInfo, setShowDatabaseInfo] = useState(false);
-
+  const [fileUploadModalOpen, setFileUploadModalOpen] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const fileInputRef = useRef(null);
+  const [currentUploadField, setCurrentUploadField] = useState('');
+  
   // Create workflow steps
   const steps = [
     'Asset & Database',
@@ -185,6 +198,86 @@ const MetadataCollectionStepper = () => {
     }
   };
 
+  // Enhanced file upload handling
+  const openFileUploadModal = (field) => {
+    setCurrentUploadField(field);
+    setFileUploadModalOpen(true);
+    setUploadedFiles([]);
+    setUploadSuccess(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFiles(files);
+    }
+  };
+
+  const handleFileInput = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      handleFiles(files);
+    }
+  };
+
+  const handleFiles = (files) => {
+    const validFiles = files.filter(file => {
+      const ext = file.name.split('.').pop().toLowerCase();
+      return ['csv', 'xlsx', 'xls'].includes(ext);
+    });
+    
+    if (validFiles.length > 0) {
+      setUploadedFiles(validFiles);
+    }
+  };
+
+  const removeFile = (index) => {
+    const newFiles = [...uploadedFiles];
+    newFiles.splice(index, 1);
+    setUploadedFiles(newFiles);
+  };
+
+  const handleUpload = () => {
+    if (uploadedFiles.length === 0) return;
+    
+    setUploading(true);
+    
+    // Simulate file upload
+    setTimeout(() => {
+      setUploading(false);
+      setUploadSuccess(true);
+      
+      // Update form data with the first file
+      setFormData({
+        ...formData,
+        [currentUploadField]: uploadedFiles[0]
+      });
+      
+      // Auto-close after success
+      setTimeout(() => {
+        setFileUploadModalOpen(false);
+      }, 1500);
+    }, 2000);
+  };
+
   const renderStepContent = (step) => {
     switch (step) {
       case 0:
@@ -206,124 +299,124 @@ const MetadataCollectionStepper = () => {
             </Paper>
             
             <Grid container spacing={3} sx={{ mb: 3 }}>
-  <Grid item xs={12} md={6} sx={{ minWidth: '50%' }}>
-    <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
-      <InputLabel id="asset-select-label">Select Asset</InputLabel>
-      <Select
-        labelId="asset-select-label"
-        value={formData.asset?.id || ''}
-        onChange={handleAssetChange}
-        label="Select Asset"
-        IconComponent={ArrowDropDownIcon}
-        MenuProps={{
-          PaperProps: {
-            style: {
-              maxHeight: 300,
-            },
-          },
-        }}
-      >
-        {assets.map((asset) => (
-          <MenuItem key={asset.id} value={asset.id}>
-            <Box>
-              <Typography fontWeight={formData.asset?.id === asset.id ? 'bold' : 'normal'}>
-                {asset.name}
-              </Typography>
-            </Box>
-          </MenuItem>
-        ))}
-        <Divider sx={{ my: 1 }} />
-        <MenuItem value="create-new">
-          <Box display="flex" alignItems="center" color="primary.main">
-            <AddCircleIcon sx={{ mr: 1 }} />
-            <Typography fontWeight="bold">Create New Asset</Typography>
-          </Box>
-        </MenuItem>
-      </Select>
-    </FormControl>
+              <Grid item xs={12} md={6} sx={{ minWidth: '50%' }}>
+                <FormControl fullWidth variant="outlined" sx={{ mb: 3 }}>
+                  <InputLabel id="asset-select-label">Select Asset</InputLabel>
+                  <Select
+                    labelId="asset-select-label"
+                    value={formData.asset?.id || ''}
+                    onChange={handleAssetChange}
+                    label="Select Asset"
+                    IconComponent={ArrowDropDownIcon}
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 300,
+                        },
+                      },
+                    }}
+                  >
+                    {assets.map((asset) => (
+                      <MenuItem key={asset.id} value={asset.id}>
+                        <Box>
+                          <Typography fontWeight={formData.asset?.id === asset.id ? 'bold' : 'normal'}>
+                            {asset.name}
+                          </Typography>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                    <Divider sx={{ my: 1 }} />
+                    <MenuItem value="create-new">
+                      <Box display="flex" alignItems="center" color="primary.main">
+                        <AddCircleIcon sx={{ mr: 1 }} />
+                        <Typography fontWeight="bold">Create New Asset</Typography>
+                      </Box>
+                    </MenuItem>
+                  </Select>
+                </FormControl>
 
-    {formData.asset && (
-      <FormControl fullWidth variant="outlined">
-        <InputLabel id="database-select-label">Select Database</InputLabel>
-        <Select
-          labelId="database-select-label"
-          value={formData.database?.id || ''}
-          onChange={handleDatabaseChange}
-          label="Select Database"
-          IconComponent={ArrowDropDownIcon}
-          MenuProps={{
-            PaperProps: {
-              style: {
-                maxHeight: 300,
-              },
-            },
-          }}
-        >
-          {formData.asset.databases.map((db) => (
-            <MenuItem key={db.id} value={db.id}>
-              <Box>
-                <Typography fontWeight={formData.database?.id === db.id ? 'bold' : 'normal'}>
-                  {db.name}
-                </Typography>
-              </Box>
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    )}
+                {formData.asset && (
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="database-select-label">Select Database</InputLabel>
+                    <Select
+                      labelId="database-select-label"
+                      value={formData.database?.id || ''}
+                      onChange={handleDatabaseChange}
+                      label="Select Database"
+                      IconComponent={ArrowDropDownIcon}
+                      MenuProps={{
+                        PaperProps: {
+                          style: {
+                            maxHeight: 300,
+                          },
+                        },
+                      }}
+                    >
+                      {formData.asset.databases.map((db) => (
+                        <MenuItem key={db.id} value={db.id}>
+                          <Box>
+                            <Typography fontWeight={formData.database?.id === db.id ? 'bold' : 'normal'}>
+                              {db.name}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
 
-    <Box sx={{ mt: 2, display: 'flex', gap: 2, textAlign: 'center' }}>
-      <Button
-        variant="outlined"
-        onClick={() => setShowCreateModal(true)}
-        startIcon={<AddCircleIcon />}
-        sx={{ mt: 2 }}
-      >
-        Create New Asset
-      </Button>
-      <Button
-        variant="outlined"
-        onClick={() => setFormData({ ...formData, asset: null, database: null })}
-        startIcon={<CloseIcon />}
-        sx={{ mt: 2 }}
-      >
-        Clear Selection
-      </Button>
-    </Box>
-  </Grid>
+                <Box sx={{ mt: 2, display: 'flex', gap: 2, textAlign: 'center' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setShowCreateModal(true)}
+                    startIcon={<AddCircleIcon />}
+                    sx={{ mt: 2 }}
+                  >
+                    Create New Asset
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setFormData({ ...formData, asset: null, database: null })}
+                    startIcon={<CloseIcon />}
+                    sx={{ mt: 2 }}
+                  >
+                    Clear Selection
+                  </Button>
+                </Box>
+              </Grid>
 
-  {formData.asset && formData.database && (
-    <Grid item xs={12} md={6} sx={{ minWidth: '45%' }}>
-      <Paper elevation={0} sx={{ p: 3, borderLeft: '4px solid #1976d2', height: '100%' }}>
-        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-          <StorageIcon sx={{ mr: 1, color: '#1976d2' }} />
-          Selected Asset
-        </Typography>
+              {formData.asset && formData.database && (
+                <Grid item xs={12} md={6} sx={{ minWidth: '45%' }}>
+                  <Paper elevation={0} sx={{ p: 3, borderLeft: '4px solid #1976d2', height: '100%' }}>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                      <StorageIcon sx={{ mr: 1, color: '#1976d2' }} />
+                      Selected Asset
+                    </Typography>
 
-        <Box sx={{ mb: 2, p: 2, backgroundColor: '#f0f7ff', borderRadius: 1 }}>
-          <Typography fontWeight="bold">{formData.asset.name}</Typography>
-        </Box>
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: '#f0f7ff', borderRadius: 1 }}>
+                      <Typography fontWeight="bold">{formData.asset.name}</Typography>
+                    </Box>
 
-        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, mt: 3, display: 'flex', alignItems: 'center' }}>
-          <DatabaseIcon sx={{ mr: 1, color: '#1976d2' }} />
-          Selected Database
-        </Typography>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, mt: 3, display: 'flex', alignItems: 'center' }}>
+                      <DatabaseIcon sx={{ mr: 1, color: '#1976d2' }} />
+                      Selected Database
+                    </Typography>
 
-        <Box sx={{ p: 2, backgroundColor: '#f0f7ff', borderRadius: 1 }}>
-          <Typography fontWeight="bold">{formData.database.name}</Typography>
-        </Box>
+                    <Box sx={{ p: 2, backgroundColor: '#f0f7ff', borderRadius: 1 }}>
+                      <Typography fontWeight="bold">{formData.database.name}</Typography>
+                    </Box>
 
-        <Chip
-          label="Ready to proceed"
-          color="success"
-          size="small"
-          icon={<CheckCircleIcon fontSize="small" />}
-          sx={{ mt: 3, alignSelf: 'flex-start' }}
-        />
-      </Paper>
-    </Grid>
-  )}
-</Grid>
+                    <Chip
+                      label="Ready to proceed"
+                      color="success"
+                      size="small"
+                      icon={<CheckCircleIcon fontSize="small" />}
+                      sx={{ mt: 3, alignSelf: 'flex-start' }}
+                    />
+                  </Paper>
+                </Grid>
+              )}
+            </Grid>
           </Box>
         );
       case 1:
@@ -379,23 +472,14 @@ const MetadataCollectionStepper = () => {
                   </Typography>
                 </Paper>
                 
-                <input
-                  accept=".csv,.xlsx,.xls"
-                  style={{ display: 'none' }}
-                  id="resource-data-upload"
-                  type="file"
-                  onChange={handleFileUpload('resourceDataElementFile')}
-                />
-                <label htmlFor="resource-data-upload">
-                  <Button 
-                    variant="contained" 
-                    component="span"
-                    startIcon={<CloudUploadIcon />}
-                    sx={{ mr: 2 }}
-                  >
-                    Upload File
-                  </Button>
-                </label>
+                <Button 
+                  variant="contained" 
+                  startIcon={<CloudUploadIcon />}
+                  sx={{ mr: 2 }}
+                  onClick={() => openFileUploadModal('resourceDataElementFile')}
+                >
+                  Upload File
+                </Button>
                 
                 {formData.resourceDataElementFile && (
                   <Typography variant="body2" sx={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -422,23 +506,14 @@ const MetadataCollectionStepper = () => {
                   </Typography>
                 </Paper>
                 
-                <input
-                  accept=".csv,.xlsx,.xls"
-                  style={{ display: 'none' }}
-                  id="process-upload"
-                  type="file"
-                  onChange={handleFileUpload('processFile')}
-                />
-                <label htmlFor="process-upload">
-                  <Button 
-                    variant="contained" 
-                    component="span"
-                    startIcon={<CloudUploadIcon />}
-                    sx={{ mr: 2 }}
-                  >
-                    Upload File
-                  </Button>
-                </label>
+                <Button 
+                  variant="contained" 
+                  startIcon={<CloudUploadIcon />}
+                  sx={{ mr: 2 }}
+                  onClick={() => openFileUploadModal('processFile')}
+                >
+                  Upload File
+                </Button>
                 
                 {formData.processFile && (
                   <Typography variant="body2" sx={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -465,26 +540,14 @@ const MetadataCollectionStepper = () => {
                   </Typography>
                 </Paper>
                 
-                <input
-  accept=".csv,.xlsx,.xls"
-  style={{ display: 'none' }}
-  id="process-resource-upload"
-  type="file"
-  onChange={(event) => {
-    handleFileUpload('processResourceFile')(event);
-    event.target.value = ''; // Reset the file input value
-  }}
-/>
-<label htmlFor="process-resource-upload">
-  <Button 
-    variant="contained" 
-    component="span"
-    startIcon={<CloudUploadIcon />}
-    sx={{ mr: 2 }}
-  >
-    Upload File
-  </Button>
-</label>
+                <Button 
+                  variant="contained" 
+                  startIcon={<CloudUploadIcon />}
+                  sx={{ mr: 2 }}
+                  onClick={() => openFileUploadModal('processResourceFile')}
+                >
+                  Upload File
+                </Button>
                 
                 {formData.processResourceFile && (
                   <Typography variant="body2" sx={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -510,25 +573,26 @@ const MetadataCollectionStepper = () => {
       background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e7f1 100%)'
     }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
-      <Box 
-  sx={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    mb: 4 
-  }}
->
-  <Typography 
-    variant="h4" 
-    sx={{ 
-      fontWeight: 'bold', 
-      color: '#2c3e50', 
-      textAlign: 'center' 
-    }}
-  >
-    Metadata Collection
-  </Typography>
-</Box>
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            mb: 4 
+          }}
+        >
+          <Typography 
+            variant="h4" 
+            sx={{ 
+              fontWeight: 'bold', 
+              color: '#2c3e50', 
+              textAlign: 'center' 
+            }}
+          >
+            Metadata Collection
+          </Typography>
+        </Box>
+        
         <Box sx={{ maxWidth: 1000, mx: 'auto', mb: 4 }}>
           <Stepper activeStep={activeStep} alternativeLabel>
             {steps.map((label) => (
@@ -631,18 +695,6 @@ const MetadataCollectionStepper = () => {
                 />
               </Grid>
               
-              {/* <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Asset Description"
-                  value={formData.newAssetDescription}
-                  onChange={(e) => setFormData({...formData, newAssetDescription: e.target.value})}
-                  variant="outlined"
-                  multiline
-                  rows={2}
-                />
-              </Grid> */}
-              
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -714,6 +766,131 @@ const MetadataCollectionStepper = () => {
             sx={{ px: 4 }}
           >
             Create Asset
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* File Upload Modal */}
+      <Dialog 
+        open={fileUploadModalOpen} 
+        onClose={() => setFileUploadModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box display="flex" alignItems="center">
+            <CloudUploadIcon sx={{ mr: 1 }} />
+            Upload File
+          </Box>
+          <IconButton onClick={() => setFileUploadModalOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ p: 3 }}>
+            <Box
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              sx={{
+                border: '2px dashed',
+                borderColor: isDragging ? '#1976d2' : '#bdbdbd',
+                borderRadius: 2,
+                p: 4,
+                textAlign: 'center',
+                backgroundColor: isDragging ? '#f0f7ff' : '#fafafa',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                mb: 2
+              }}
+              onClick={() => fileInputRef.current.click()}
+            >
+              <CloudUploadIcon sx={{ fontSize: 48, color: '#1976d2', mb: 1 }} />
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                Drag & Drop files here
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                or click to browse your files
+              </Typography>
+              <Typography variant="caption" color="textSecondary">
+                Supported formats: CSV, XLSX (Max: 10MB)
+              </Typography>
+              
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileInput}
+                accept=".csv,.xlsx,.xls"
+                multiple={false}
+              />
+            </Box>
+            
+            {uploadedFiles.length > 0 && (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                  Selected Files
+                </Typography>
+                <List dense>
+                  {uploadedFiles.map((file, index) => (
+                    <ListItem 
+                      key={index} 
+                      secondaryAction={
+                        <IconButton edge="end" onClick={() => removeFile(index)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      }
+                      sx={{ 
+                        backgroundColor: '#f5f5f5', 
+                        borderRadius: 1,
+                        mb: 1 
+                      }}
+                    >
+                      <ListItemIcon>
+                        <FileIcon />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary={file.name} 
+                        secondary={`${(file.size / 1024).toFixed(2)} KB`} 
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+            
+            <Paper variant="outlined" sx={{ p: 2, mt: 3, backgroundColor: '#fafafa' }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                File Guidelines:
+              </Typography>
+              <Typography variant="body2" color="textSecondary" component="div">
+                <ul>
+                  <li>File format: CSV or Excel (.xlsx)</li>
+                  <li>Max file size: 10MB</li>
+                  <li>First row should contain headers</li>
+                  <li>No special characters in column names</li>
+                </ul>
+              </Typography>
+            </Paper>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #eee' }}>
+          <Button 
+            onClick={() => setFileUploadModalOpen(false)} 
+            variant="outlined"
+            sx={{ mr: 2 }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleUpload}
+            disabled={uploadedFiles.length === 0 || uploading || uploadSuccess}
+            startIcon={uploading ? <CircularProgress size={20} color="inherit" /> : null}
+            sx={{ px: 4 }}
+          >
+            {uploading ? 'Uploading...' : uploadSuccess ? 'Uploaded!' : 'Upload File'}
           </Button>
         </DialogActions>
       </Dialog>
